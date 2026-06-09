@@ -150,7 +150,6 @@ function renderView() {
             const venueDisplay = item["会場URL"] ? `<a href="${item["会場URL"]}" target="_blank" class="text-decoration-none fw-bold text-dark">${item["会場名"]} 🔗</a>` : `<span class="fw-bold">${item["会場名"]}</span>`;
             const noteDisplay = item["備考"] ? `<div class="text-muted small mt-2">ℹ️ ${item["備考"]}</div>` : '';
             
-            // 【新機能】フライヤーのURLが入っているときだけ画像を差し込む設定
             let flyerDisplay = '';
             if (item["フライヤー"] && item["フライヤー"].trim().startsWith('http')) {
                 flyerDisplay = `
@@ -189,15 +188,17 @@ function renderView() {
     initCalendar(filteredData);
 }
 
+// 【バグ修正】月移動に合わせてタイトル文字（2026年7月など）も正しく連動させる関数
 function updateCalendarTitleWithCount() {
     if (!calendar) return;
 
     const currentPeriod = calendar.getDate(); 
     const currentYear = currentPeriod.getFullYear();
-    const currentMonth = currentPeriod.getMonth(); 
+    const currentMonth = currentPeriod.getMonth(); // 0が1月、5が6月
 
     const events = calendar.getEvents();
     
+    // その月に含まれるイベントだけをカウント
     const monthCount = events.filter(event => {
         const eventDate = event.start;
         return eventDate.getFullYear() === currentYear && eventDate.getMonth() === currentMonth;
@@ -205,8 +206,9 @@ function updateCalendarTitleWithCount() {
 
     const titleEl = document.querySelector('.fc .fc-toolbar-title');
     if (titleEl) {
-        const baseTitle = titleEl.innerText.split('(')[0].trim();
-        titleEl.innerText = `${baseTitle} (${monthCount}件)`;
+        // 固定テキストではなく、現在表示されている年月から「2026年6月」のようなベースタイトルを毎回作り直す
+        const correctTitle = `${currentYear}年${currentMonth + 1}月`;
+        titleEl.innerText = `${correctTitle} (${monthCount}件)`;
     }
 }
 
