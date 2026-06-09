@@ -25,6 +25,22 @@ document.addEventListener('DOMContentLoaded', function() {
     renderView();
 });
 
+// バンド名に応じたクラス名を返すヘルパー関数
+function getBandColorClass(bandName) {
+    if (bandName === 'DROP DOWN MAMA') return 'bg-dropdown-mama';
+    if (bandName === '2120 BLUES BAND') return 'bg-2120-blues';
+    if (bandName === 'スズナPA') return 'bg-suzuna-pa';
+    return 'bg-default-band';
+}
+
+// バンド名に応じたカラーコード（Hex）を返すヘルパー関数（カレンダー用）
+function getBandHexColor(bandName) {
+    if (bandName === 'DROP DOWN MAMA') return '#1a365d'; // ネイビー
+    if (bandName === '2120 BLUES BAND') return '#800020'; // ワインレッド
+    if (bandName === 'スズナPA') return '#00ced1'; // ターコイズ
+    return '#4a5568';
+}
+
 function renderView() {
     const todayStr = new Date().toISOString().split('T')[0];
     let upcomingData = liveData.filter(item => item.date >= todayStr);
@@ -57,15 +73,17 @@ function renderView() {
             const dayOfWeek = weekDays[dateObj.getDay()];
             const venueDisplay = item.url ? `<a href="${item.url}" target="_blank" class="text-decoration-none fw-bold text-dark">${item.venue} 🔗</a>` : `<span class="fw-bold">${item.venue}</span>`;
             const noteDisplay = item.note ? `<span class="text-muted small d-block">ℹ️ ${item.note}</span>` : '';
+            
+            // バンドに応じたバッジのクラスを取得
+            const badgeClass = getBandColorClass(item.band);
 
-            // 【変更点】col-md-12 で幅2倍の1列表示に。d-flexで日付の右にバンド名を配置
             listView.innerHTML += `
                 <div class="col-12 col-md-12 mb-2">
                     <div class="card shadow-sm live-card">
                         <div class="card-body">
                             <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
                                 <h6 class="card-title text-primary fw-bold m-0">${item.date} (${dayOfWeek})</h6>
-                                <span class="badge bg-secondary">${item.band}</span>
+                                <span class="badge ${badgeClass}">${item.band}</span>
                             </div>
                             <p class="card-text text-dark">
                                 ${venueDisplay}
@@ -83,14 +101,13 @@ function renderView() {
     initCalendar(filteredData);
 }
 
-// カレンダー生成のカスタム（日本語表記「日」を省くための内部フックを念のため追加）
 function initCalendar(data) {
     const calendarEl = document.getElementById('calendar');
     const calendarEvents = data.map(item => ({
         title: `${item.band} @${item.venue}`,
         start: item.date,
         url: item.url || null,
-        backgroundColor: item.band === 'DROP DOWN MAMA' ? '#1a365d' : (item.band === '2120 BLUES BAND' ? '#b91c1c' : '#4a5568'),
+        backgroundColor: getBandHexColor(item.band), // 連動カラーコードを適用
         borderColor: 'transparent'
     }));
 
@@ -99,7 +116,6 @@ function initCalendar(data) {
         initialView: 'dayGridMonth',
         locale: 'ja',
         dayCellContent: function(e) {
-            // JS側でもスマホ・PC問わず「日」を取り除く処理
             return e.dayNumberText.replace('日', '');
         },
         events: calendarEvents,
