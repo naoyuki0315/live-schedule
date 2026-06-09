@@ -7,9 +7,9 @@ body {
     background-color: #f8f9fa;
 }
 
-/* 画面全体の最大幅を制限（PC版で横並びにするため最大800pxに拡張） */
+/* 画面全体の最大幅を制限（PC版で1列でどっしり見せるため最大700pxに調整） */
 .container {
-    max-width: 800px !important;
+    max-width: 700px !important;
     margin: 0 auto !important;
 }
 
@@ -18,18 +18,18 @@ body {
    ========================================== */
 .header-container {
     position: relative;
-    width: 250px; /* 横幅は1/4サイズ（250px） */
-    height: 65px; /* 高さを半分（約65px）に制限 */
-    margin: 0 auto 30px auto; /* 周りに余白を持たせて中央よせ */
+    width: 250px; 
+    height: 65px; 
+    margin: 0 auto 30px auto; 
     overflow: hidden;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    border-radius: 4px; /* 緩やかな四角 */
+    border-radius: 4px; 
 }
 
 .header-img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* 四角い枠の中に綺麗におさめる */
+    object-fit: cover; 
     display: block;
 }
 
@@ -69,35 +69,61 @@ body {
     border-left: 5px solid #1a365d;
     transition: transform 0.2s;
     background-color: #ffffff;
-    height: 100%; /* 横並び時に高さを揃える */
 }
 
 .live-card:hover {
     transform: translateY(-2px);
 }
 
-/* 中の余白を極限まで削って「高さ半分」を実現 */
 .live-card .card-body {
     padding: 8px 12px !important; 
 }
 
-.live-card .card-title {
-    font-size: 1.0rem; /* 日付の文字を小さく */
-    margin-bottom: 2px;
-}
+/* PC版の文字サイズ基本設定 */
+.live-card .card-title { font-size: 1.1rem; margin-bottom: 0; }
+.live-card .badge { font-size: 0.8rem; padding: 4px 8px; }
+.live-card .card-text { font-size: 0.9rem; margin-bottom: 1px; }
 
-.live-card .badge {
-    font-size: 0.75rem;
-    padding: 3px 6px;
-}
-
-.live-card .card-text {
-    font-size: 0.85rem; /* 文字を全体的に小さく */
-    margin-bottom: 1px;
+/* エリア（location）の前の改行コントロール用スタイル */
+.loc-break {
+    display: inline; /* PC版では改行しない */
 }
 
 /* ==========================================
-   カレンダー（スマホ用の高さ制限を維持）
+   スマートフォン用の表示調整（メディアクエリ）
+   ========================================== */
+@media (max-width: 768px) {
+    /* スマホ版リストの文字サイズを75%に縮小 */
+    .live-card .card-body {
+        font-size: 75% !important;
+    }
+    .live-card .card-title { font-size: 1.05rem !important; }
+    .live-card .badge { font-size: 0.7rem !important; }
+    .live-card .card-text { font-size: 0.85rem !important; }
+
+    /* スマホ版でエリアが後ろに行くと見づらい場合、エリアの手前で改行させる */
+    .loc-break {
+        display: block; /* スマホ版のみ強制改行 */
+        margin-top: 2px;
+    }
+
+    /* スマホ版カレンダーの1マスの高さを半分に */
+    .fc .fc-daygrid-day-frame {
+        height: 50px !important;
+    }
+
+    /* 【重要】スマホ版カレンダーの日付から「日」を消して数字だけにする */
+    .fc .fc-daygrid-day-number {
+        font-size: 0.8rem;
+        padding: 2px !important;
+    }
+    .fc .fc-daygrid-day-number::after {
+        content: none !important; /* 「日」の文字を完全に消去 */
+    }
+}
+
+/* ==========================================
+   カレンダー（PC/共通）
    ========================================== */
 #calendar {
     width: 100%;
@@ -113,13 +139,5 @@ body {
     font-size: 1.2rem !important;
 }
 
-/* スマホ版のカレンダーの1マスの高さを半分に */
-@media (max-width: 768px) {
-    .fc .fc-daygrid-day-frame {
-        height: 50px !important;
-    }
-}
-
-/* 曜日ごとの色 */
 .fc-day-sat a { color: #0000ff; }
 .fc-day-sun a { color: #ff0000; }
