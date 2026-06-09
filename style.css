@@ -14,21 +14,22 @@ body {
 }
 
 /* ==========================================
-   ヘッダー画像（半分サイズ・中央よせ）
+   ヘッダー画像（1/4サイズ・アイコン風中央よせ）
    ========================================== */
 .header-container {
     position: relative;
-    width: 100%;
-    max-width: 500px; /* 画像の最大サイズを半分程度に制限 */
-    margin: 0 auto 20px auto; /* 下に20pxのマージンをあけつつ中央よせ */
+    width: 250px; /* 画像のサイズをさらに半分（1/4相当）にする */
+    margin: 0 auto 30px auto; /* 下に30pxのマージンをあけつつ中央よせ */
     overflow: hidden;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* 軽めの影をつけて引き締める */
-    border-radius: 8px; /* 角を少し丸める */
+    border-radius: 50%; /* 正円のアイコン風にする */
+    aspect-ratio: 1 / 1; /* 正方形を維持 */
 }
 
 .header-img {
     width: 100%;
-    height: auto;
+    height: 100%;
+    object-fit: cover; /* 画像を正円の中に綺麗に収める */
     display: block;
 }
 
@@ -68,10 +69,25 @@ body {
     border-left: 5px solid #1a365d;
     transition: transform 0.2s;
     background-color: #ffffff;
+    padding: 10px; /* 余白を狭くする */
 }
 
 .live-card:hover {
     transform: translateY(-2px);
+}
+
+.live-card .card-title {
+    font-size: 1.1rem; /* 日付の文字を少し小さく */
+    margin-bottom: 5px;
+}
+
+.live-card .badge {
+    font-size: 0.8rem; /* バンド名の文字を小さく */
+}
+
+.live-card .card-text {
+    font-size: 0.9rem; /* 会場名や時間の文字を小さく */
+    margin-bottom: 2px;
 }
 
 /* ==========================================
@@ -90,6 +106,13 @@ body {
 
 .fc .fc-toolbar-title {
     font-size: 1.2rem !important; /* 「〇年〇月」の文字サイズ調整 */
+}
+
+/* スマホ版のカレンダーの1マスの高さを半分に */
+@media (max-width: 768px) {
+    .fc .fc-daygrid-day-frame {
+        height: 50px !important; /* 高さを50pxに固定 */
+    }
 }
 
 /* 曜日ごとの色 */
