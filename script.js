@@ -148,7 +148,17 @@ function renderView() {
             const dayOfWeek = weekDays[dateObj.getDay()];
             
             const venueDisplay = item["会場URL"] ? `<a href="${item["会場URL"]}" target="_blank" class="text-decoration-none fw-bold text-dark">${item["会場名"]} 🔗</a>` : `<span class="fw-bold">${item["会場名"]}</span>`;
-            const noteDisplay = item["備考"] ? `<span class="text-muted small d-block">ℹ️ ${item["備考"]}</span>` : '';
+            const noteDisplay = item["備考"] ? `<div class="text-muted small mt-2">ℹ️ ${item["備考"]}</div>` : '';
+            
+            // 【新機能】フライヤーのURLが入っているときだけ画像を差し込む設定
+            let flyerDisplay = '';
+            if (item["フライヤー"] && item["フライヤー"].trim().startsWith('http')) {
+                flyerDisplay = `
+                    <div class="mt-3 text-center">
+                        <img src="${item["フライヤー"].trim()}" alt="フライヤー" class="img-fluid rounded shadow-sm" style="max-height: 350px; object-fit: contain;">
+                    </div>
+                `;
+            }
             
             const badgeClass = getBandColorClass(item["バンド名"]);
 
@@ -162,12 +172,13 @@ function renderView() {
                                     <span class="badge ${badgeClass}">${item["バンド名"]}</span>
                                 </div>
                             </div>
-                            <p class="card-text text-dark">
+                            <p class="card-text text-dark mb-1">
                                 ${venueDisplay}
                                 <span class="loc-break text-muted style-small">(${item["エリア"]})</span>
                             </p>
-                            <p class="card-text text-dark">⏰ ${item["時間帯"]}</p>
+                            <p class="card-text text-dark mb-0">⏰ ${item["時間帯"]}</p>
                             ${noteDisplay}
+                            ${flyerDisplay}
                         </div>
                     </div>
                 </div>
@@ -202,13 +213,17 @@ function updateCalendarTitleWithCount() {
 function initCalendar(data) {
     const calendarEl = document.getElementById('calendar');
     
-    const calendarEvents = data.map(item => ({
-        title: `${item["バンド名"]} @${item["会場名"]}`,
-        start: item["日付"],
-        url: item["会場URL"] || null,
-        backgroundColor: getBandHexColor(item["バンド名"]), 
-        borderColor: 'transparent'
-    }));
+    const calendarEvents = data.map(item => {
+        const hasUrl = item["会場URL"] && item["会場URL"].trim().startsWith('http');
+        
+        return {
+            title: `${item["バンド名"]} @${item["会場名"]}`,
+            start: item["日付"],
+            url: hasUrl ? item["会場URL"].trim() : null, 
+            backgroundColor: getBandHexColor(item["バンド名"]), 
+            borderColor: 'transparent'
+        };
+    });
 
     if (calendar) { calendar.destroy(); }
     calendar = new FullCalendar.Calendar(calendarEl, {
@@ -221,6 +236,11 @@ function initCalendar(data) {
         events: calendarEvents,
         headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
         height: 'auto',
+        eventClick: function(info) {
+            if (!info.event.url) {
+                info.jsEvent.preventDefault(); 
+            }
+        },
         datesSet: function() {
             setTimeout(updateCalendarTitleWithCount, 10); 
         }
