@@ -1,37 +1,46 @@
-/* タブボタンのアクティブ時の色（シカゴブルースっぽい渋い青） */
-.nav-pills .nav-link.active {
-    background-color: #1a365d !important;
-    color: white !important;
-}
-
-.nav-pills .nav-link {
-    color: #4a5568;
-    font-weight: bold;
-}
-
-/* ライブ情報のカードデザイン */
-.live-card {
-    border-left: 5px solid #1a365d;
-    transition: transform 0.2s;
-}
-.live-card:hover {
-    transform: translateY(-2px);
-}
-
-/* カレンダーの微調整 */
-#calendar {
-    max-width: 900px;
+/* ヘッダー画像のレスポンシブ配置 */
+.header-container {
+    position: relative;
+    width: 100%;
+    max-width: 1000px;
     margin: 0 auto;
+    overflow: hidden;
 }
 
-/* フライヤー画像のスタイル */
-.flyer-thumb {
-    max-width: 100%;
+.header-img {
+    width: 100%;
     height: auto;
-    border-radius: 4px;
-    cursor: pointer;
+    display: block;
 }
 
-/* 曜日ごとの色（カレンダー用） */
-.fc-day-sat a { color: #0000ff; } /* 土曜日は青 */
-.fc-day-sun a { color: #ff0000; } /* 日曜・祝日は赤 */
+/* グレーアウト用のマスク（初期状態は透明度0＝通常表示） */
+.mask {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.65); /* 渋く暗めにする黒フィルター */
+    transition: opacity 0.3s ease;
+    opacity: 0;
+    pointer-events: none; /* 下の画像やリンクの邪魔をしない設定 */
+}
+
+/* 左側（Drop Down Mama側）の守備範囲 */
+.mask-left {
+    left: 0;
+    width: 50%;
+}
+
+/* 右側（2120側）の守備範囲 */
+.mask-right {
+    right: 0;
+    width: 50%;
+}
+
+/* これ以降は前回のCSSと同じ */
+.nav-pills .nav-link.active { background-color: #1a365d !important; color: white !important; }
+.nav-pills .nav-link { color: #4a5568; font-weight: bold; }
+.live-card { border-left: 5px solid #1a365d; transition: transform 0.2s; }
+.live-card:hover { transform: translateY(-2px); }
+#calendar { max-width: 900px; margin: 0 auto; }
+.fc-day-sat a { color: #0000ff; }
+.fc-day-sun a { color: #ff0000; }
