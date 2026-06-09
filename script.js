@@ -26,31 +26,26 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function renderView() {
-    // 【仕様①：終わったライブの自動非表示】今日以降のデータのみに絞り込む
-    const todayStr = new Date().toISOString().split('T')[0]; // "2026-06-09" 形式を取得
+    const todayStr = new Date().toISOString().split('T')[0];
     let upcomingData = liveData.filter(item => item.date >= todayStr);
 
-    // バンド名での絞り込み
     const filteredData = (currentBand === 'ALL') ? upcomingData : upcomingData.filter(item => item.band === currentBand);
     filteredData.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-    // 【仕様②：看板画像のグレーアウト連動】
     const maskLeft = document.getElementById('maskLeft');
     const maskRight = document.getElementById('maskRight');
     
     if (currentBand === 'DROP DOWN MAMA') {
-        maskLeft.style.opacity = '0';    // 自分はそのまま
-        maskRight.style.opacity = '1';   // 相方（2120）をグレーアウト
+        maskLeft.style.opacity = '0';
+        maskRight.style.opacity = '1';
     } else if (currentBand === '2120 BLUES BAND') {
-        maskLeft.style.opacity = '1';    // 相方（MAMA）をグレーアウト
-        maskRight.style.opacity = '0';   // 自分はそのまま
+        maskLeft.style.opacity = '1';
+        maskRight.style.opacity = '0';
     } else {
-        // 総合スケジュール、またはスズナPAの時は両方100%表示
         maskLeft.style.opacity = '0';
         maskRight.style.opacity = '0';
     }
 
-    // リスト表示の生成
     const listView = document.getElementById('list-view');
     listView.innerHTML = '';
 
@@ -61,16 +56,17 @@ function renderView() {
             const dateObj = new Date(item.date);
             const dayOfWeek = weekDays[dateObj.getDay()];
             const venueDisplay = item.url ? `<a href="${item.url}" target="_blank" class="text-decoration-none fw-bold text-dark">${item.venue} 🔗</a>` : `<span class="fw-bold">${item.venue}</span>`;
-            const noteDisplay = item.note ? `<div class="text-muted small">ℹ️ ${item.note}</div>` : '';
+            const noteDisplay = item.note ? `<span class="text-muted small d-block">ℹ️ ${item.note}</span>` : '';
 
+            // 【変更点】col-md-6 にしてPC版では横に2個（幅2倍）並ぶように変更
             listView.innerHTML += `
-                <div class="col-md-8 mb-3">
+                <div class="col-sm-12 col-md-6 mb-3">
                     <div class="card shadow-sm live-card">
                         <div class="card-body">
-                            <h5 class="card-title mb-1 text-primary fw-bold">${item.date} (${dayOfWeek})</h5>
-                            <span class="badge bg-secondary mb-2">${item.band}</span>
-                            <p class="card-text mb-1">${venueDisplay} <span class="text-muted small">(${item.location})</span></p>
-                            <p class="card-text mb-1 text-dark">⏰ ${item.time}</p>
+                            <h6 class="card-title mb-1 text-primary fw-bold">${item.date} (${dayOfWeek})</h6>
+                            <span class="badge bg-secondary mb-1">${item.band}</span>
+                            <p class="card-text mb-0">${venueDisplay} <span class="text-muted style-small">(${item.location})</span></p>
+                            <p class="card-text mb-0 text-dark">⏰ ${item.time}</p>
                             ${noteDisplay}
                         </div>
                     </div>
