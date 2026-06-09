@@ -7,30 +7,29 @@ body {
     background-color: #f8f9fa;
 }
 
-/* 画面全体の最大幅を制限（PC版で1列でどっしり見せるため最大700pxに調整） */
 .container {
     max-width: 700px !important;
     margin: 0 auto !important;
 }
 
 /* ==========================================
-   ヘッダー画像（1/4サイズ・四角・高さ半分・中央よせ）
+   ヘッダー画像（サイズ維持・切れないようにリサイズ）
    ========================================== */
 .header-container {
     position: relative;
-    width: 250px; 
-    height: 65px; 
+    width: 250px; /* 横幅250pxを維持 */
     margin: 0 auto 30px auto; 
     overflow: hidden;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     border-radius: 4px; 
+    background-color: #111; /* 画像の上下に隙間ができた時のためのシックな黒背景 */
 }
 
 .header-img {
     width: 100%;
-    height: 100%;
-    object-fit: cover; 
+    height: auto; /* 高さは画像の比率に合わせて自動調整（切れない） */
     display: block;
+    object-fit: contain; /* 画像全体を枠内に収める */
 }
 
 /* グレーアウト用のマスク */
@@ -63,7 +62,7 @@ body {
 }
 
 /* ==========================================
-   ライブ情報のカード（リスト表示：高さ半分・極小デザイン）
+   ライブ情報のカード＆指定のバンドカラー
    ========================================== */
 .live-card {
     border-left: 5px solid #1a365d;
@@ -79,46 +78,55 @@ body {
     padding: 8px 12px !important; 
 }
 
-/* PC版の文字サイズ基本設定 */
 .live-card .card-title { font-size: 1.1rem; margin-bottom: 0; }
-.live-card .badge { font-size: 0.8rem; padding: 4px 8px; }
 .live-card .card-text { font-size: 0.9rem; margin-bottom: 1px; }
 
-/* エリア（location）の前の改行コントロール用スタイル */
+/* 【新仕様】リストのバンド名バッジの色（カレンダーと統一） */
+.bg-dropdown-mama {
+    background-color: #1a365d !important; /* ネイビー */
+    color: #ffffff !important;
+}
+.bg-2120-blues {
+    background-color: #800020 !important; /* ワインレッド */
+    color: #ffffff !important;
+}
+.bg-suzuna-pa {
+    background-color: #00ced1 !important; /* ターコイズ */
+    color: #ffffff !important;
+}
+.bg-default-band {
+    background-color: #4a5568 !important;
+}
+
 .loc-break {
-    display: inline; /* PC版では改行しない */
+    display: inline;
 }
 
 /* ==========================================
    スマートフォン用の表示調整（メディアクエリ）
    ========================================== */
 @media (max-width: 768px) {
-    /* スマホ版リストの文字サイズを75%に縮小 */
     .live-card .card-body {
         font-size: 75% !important;
     }
     .live-card .card-title { font-size: 1.05rem !important; }
-    .live-card .badge { font-size: 0.7rem !important; }
     .live-card .card-text { font-size: 0.85rem !important; }
 
-    /* スマホ版でエリアが後ろに行くと見づらい場合、エリアの手前で改行させる */
     .loc-break {
-        display: block; /* スマホ版のみ強制改行 */
+        display: block;
         margin-top: 2px;
     }
 
-    /* スマホ版カレンダーの1マスの高さを半分に */
     .fc .fc-daygrid-day-frame {
         height: 50px !important;
     }
 
-    /* 【重要】スマホ版カレンダーの日付から「日」を消して数字だけにする */
     .fc .fc-daygrid-day-number {
         font-size: 0.8rem;
         padding: 2px !important;
     }
     .fc .fc-daygrid-day-number::after {
-        content: none !important; /* 「日」の文字を完全に消去 */
+        content: none !important;
     }
 }
 
