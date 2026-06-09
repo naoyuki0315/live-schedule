@@ -10,9 +10,13 @@
 </head>
 <body class="bg-light">
 
-    <div class="container py-4">
-        <h1 class="text-center mb-4">🎵 LIVE SCHEDULE</h1>
+    <div class="header-container">
+        <img src="image.png" alt="LIVE SCHEDULE" class="header-img" id="headerImage">
+        <div class="mask mask-left" id="maskLeft"></div>
+        <div class="mask mask-right" id="maskRight"></div>
+    </div>
 
+    <div class="container py-4">
         <ul class="nav nav-pills justify-content-center mb-4" id="bandTabs">
             <li class="nav-item"><button class="nav-item nav-link active" onclick="switchTab('ALL')">総合スケジュール</button></li>
             <li class="nav-item"><button class="nav-item nav-link" onclick="switchTab('DROP DOWN MAMA')">DROP DOWN MAMA</button></li>
@@ -27,9 +31,7 @@
             </div>
         </div>
 
-        <div id="list-view" class="row justify-content-center">
-            </div>
-
+        <div id="list-view" class="row justify-content-center"></div>
         <div id="calendar-view" class="bg-white p-3 rounded shadow-sm d-none">
             <div id="calendar"></div>
         </div>
