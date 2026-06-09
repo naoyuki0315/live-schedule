@@ -58,15 +58,20 @@ function renderView() {
             const venueDisplay = item.url ? `<a href="${item.url}" target="_blank" class="text-decoration-none fw-bold text-dark">${item.venue} 🔗</a>` : `<span class="fw-bold">${item.venue}</span>`;
             const noteDisplay = item.note ? `<span class="text-muted small d-block">ℹ️ ${item.note}</span>` : '';
 
-            // 【変更点】col-md-6 にしてPC版では横に2個（幅2倍）並ぶように変更
+            // 【変更点】col-md-12 で幅2倍の1列表示に。d-flexで日付の右にバンド名を配置
             listView.innerHTML += `
-                <div class="col-sm-12 col-md-6 mb-3">
+                <div class="col-12 col-md-12 mb-2">
                     <div class="card shadow-sm live-card">
                         <div class="card-body">
-                            <h6 class="card-title mb-1 text-primary fw-bold">${item.date} (${dayOfWeek})</h6>
-                            <span class="badge bg-secondary mb-1">${item.band}</span>
-                            <p class="card-text mb-0">${venueDisplay} <span class="text-muted style-small">(${item.location})</span></p>
-                            <p class="card-text mb-0 text-dark">⏰ ${item.time}</p>
+                            <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                                <h6 class="card-title text-primary fw-bold m-0">${item.date} (${dayOfWeek})</h6>
+                                <span class="badge bg-secondary">${item.band}</span>
+                            </div>
+                            <p class="card-text text-dark">
+                                ${venueDisplay}
+                                <span class="loc-break text-muted style-small">(${item.location})</span>
+                            </p>
+                            <p class="card-text text-dark">⏰ ${item.time}</p>
                             ${noteDisplay}
                         </div>
                     </div>
@@ -78,6 +83,7 @@ function renderView() {
     initCalendar(filteredData);
 }
 
+// カレンダー生成のカスタム（日本語表記「日」を省くための内部フックを念のため追加）
 function initCalendar(data) {
     const calendarEl = document.getElementById('calendar');
     const calendarEvents = data.map(item => ({
@@ -92,6 +98,10 @@ function initCalendar(data) {
     calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         locale: 'ja',
+        dayCellContent: function(e) {
+            // JS側でもスマホ・PC問わず「日」を取り除く処理
+            return e.dayNumberText.replace('日', '');
+        },
         events: calendarEvents,
         headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
         height: 'auto'
