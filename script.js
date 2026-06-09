@@ -1,7 +1,7 @@
 // 【設定】スプレッドシートの「Webに公開」で取得したCSVのURLをここに貼り付けてください
 const SPREADSHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQluhuOEDERWVDgxgvKrY7cPLfIF2Qw38VP9BnjGxl318Sy5Fu2RBUm3lwIFot78JLO7-5TO3b5oy1_/pub?gid=544725873&single=true&output=csv";
 
-let liveData = []; // スプレッドシートから読み込んだデータがここに入ります
+let liveData = []; 
 let currentBand = 'ALL';
 let currentView = 'list';
 let calendar = null;
@@ -9,24 +9,21 @@ const weekDays = ["日", "月", "火", "水", "木", "金", "土"];
 
 document.addEventListener('DOMContentLoaded', function() {
     setupHeaderClickEvents();
-    fetchSpreadsheetData(); // 画面を開いた瞬間にデータを読み込む
+    fetchSpreadsheetData(); 
 });
 
-// CSVデータをスプレッドシートから取得する関数
 function fetchSpreadsheetData() {
     const listView = document.getElementById('list-view');
     listView.innerHTML = '<p class="text-center text-muted py-5">最新のスケジュールを読み込み中...</p>';
 
     fetch(SPREADSHEET_CSV_URL)
         .then(response => {
-            if (!response.ok) {
-                throw new Error('データの読み込みに失敗しました。');
-            }
+            if (!response.ok) throw new Error('データの読み込みに失敗しました。');
             return response.text();
         })
         .then(csvText => {
-            liveData = parseCSV(csvText); // CSVをプログラムで使える形に変換
-            renderView(); // 画面を描画
+            liveData = parseCSV(csvText); 
+            renderView(); 
         })
         .catch(error => {
             console.error(error);
@@ -34,25 +31,28 @@ function fetchSpreadsheetData() {
         });
 }
 
-// 簡易的なCSV解析関数（1行目をヘッダーとしてオブジェクトの配列を作る）
+// スプレッドシートの日本語ヘッダーを読み込むための解析処理
 function parseCSV(text) {
-    // 改行コードで分割
     const lines = text.split(/\r\n|\n/);
     if (lines.length === 0 || lines[0] === "") return [];
 
-    // 1行目から項目名（ヘッダー）を取得して、前後の不要な空白や引用符を消す
+    // 1行目のヘッダー（日本語）を取得
     const headers = lines[0].split(',').map(h => h.replace(/^["']|["']$/g, '').trim());
     const result = [];
 
     for (let i = 1; i < lines.length; i++) {
-        if (lines[i].trim() === "") continue; // 空行はスキップ
+        if (lines[i].trim() === "") continue; 
         
-        // カンマで分割（簡易版。項目内にカンマが含まれない前提）
         const currentline = lines[i].split(',');
         const obj = {};
         
         headers.forEach((header, index) => {
             let value = currentline[index] ? currentline[index].replace(/^["']|["']$/g, '').trim() : "";
+            
+            // スプレッドシートの日付形式（2026/06/06）をカレンダー用（2026-06-06）に変換
+            if (header === "日付" && value.includes("/")) {
+                value = value.replace(/\//g, "-");
+            }
             obj[header] = value;
         });
         
@@ -116,11 +116,13 @@ function getBandHexColor(bandName) {
 
 function renderView() {
     const todayStr = new Date().toISOString().split('T')[0];
-    // 今日以降のデータのみに絞り込む
-    let upcomingData = liveData.filter(item => item.date && item.date >= todayStr);
+    
+    // 【日本語化】item.date から item["日付"] に変更
+    let upcomingData = liveData.filter(item => item["日付"] && item["日付"] >= todayStr);
 
-    const filteredData = (currentBand === 'ALL') ? upcomingData : upcomingData.filter(item => item.band === currentBand);
-    filteredData.sort((a, b) => new Date(a.date) - new Date(b.date));
+    // 【日本語化】item.band から item["バンド名"] に変更
+    const filteredData = (currentBand === 'ALL') ? upcomingData : upcomingData.filter(item => item["バンド名"] === currentBand);
+    filteredData.sort((a, b) => new Date(a["日付"]) - new Date(b["日付"]));
 
     const maskLeft = document.getElementById('maskLeft');
     const maskRight = document.getElementById('maskRight');
@@ -147,28 +149,30 @@ function renderView() {
         listView.innerHTML = '<p class="text-center text-muted py-5">これから開催予定のライブはありません。</p>';
     } else {
         filteredData.forEach(item => {
-            const dateObj = new Date(item.date);
+            const dateObj = new Date(item["日付"]);
             const dayOfWeek = weekDays[dateObj.getDay()];
-            const venueDisplay = item.url ? `<a href="${item.url}" target="_blank" class="text-decoration-none fw-bold text-dark">${item.venue} 🔗</a>` : `<span class="fw-bold">${item.venue}</span>`;
-            const noteDisplay = item.note ? `<span class="text-muted small d-block">ℹ️ ${item.note}</span>` : '';
             
-            const badgeClass = getBandColorClass(item.band);
+            // 【日本語化】会場URL、会場名、エリア、時間帯、備考への紐付け
+            const venueDisplay = item["会場URL"] ? `<a href="${item["会場URL"]}" target="_blank" class="text-decoration-none fw-bold text-dark">${item["会場名"]} 🔗</a>` : `<span class="fw-bold">${item["会場名"]}</span>`;
+            const noteDisplay = item["備考"] ? `<span class="text-muted small d-block">ℹ️ ${item["備考"]}</span>` : '';
+            
+            const badgeClass = getBandColorClass(item["バンド名"]);
 
             listView.innerHTML += `
                 <div class="col-12 col-md-12 mb-2">
                     <div class="card shadow-sm live-card">
                         <div class="card-body">
                             <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-1 gap-md-2 mb-1">
-                                <h6 class="card-title text-primary fw-bold m-0">${item.date} (${dayOfWeek})</h6>
+                                <h6 class="card-title text-primary fw-bold m-0">${item["日付"]} (${dayOfWeek})</h6>
                                 <div>
-                                    <span class="badge ${badgeClass}">${item.band}</span>
+                                    <span class="badge ${badgeClass}">${item["バンド名"]}</span>
                                 </div>
                             </div>
                             <p class="card-text text-dark">
                                 ${venueDisplay}
-                                <span class="loc-break text-muted style-small">(${item.location})</span>
+                                <span class="loc-break text-muted style-small">(${item["エリア"]})</span>
                             </p>
-                            <p class="card-text text-dark">⏰ ${item.time}</p>
+                            <p class="card-text text-dark">⏰ ${item["時間帯"]}</p>
                             ${noteDisplay}
                         </div>
                     </div>
@@ -203,11 +207,13 @@ function updateCalendarTitleWithCount() {
 
 function initCalendar(data) {
     const calendarEl = document.getElementById('calendar');
+    
+    // 【日本語化】カレンダーのイベント生成
     const calendarEvents = data.map(item => ({
-        title: `${item.band} @${item.venue}`,
-        start: item.date,
-        url: item.url || null,
-        backgroundColor: getBandHexColor(item.band), 
+        title: `${item["バンド名"]} @${item["会場名"]}`,
+        start: item["日付"],
+        url: item["会場URL"] || null,
+        backgroundColor: getBandHexColor(item["バンド名"]), 
         borderColor: 'transparent'
     }));
 
