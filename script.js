@@ -19,13 +19,12 @@ const liveData = [
 let currentBand = 'ALL';
 let currentView = 'list';
 let calendar = null;
-const weekDays = ["日", "月", "火", "水", "木", "金", "土"];
+const weekDays = ["日", "月", "火", " switches土"];
 
 document.addEventListener('DOMContentLoaded', function() {
     renderView();
 });
 
-// バンド名に応じたクラス名を返すヘルパー関数
 function getBandColorClass(bandName) {
     if (bandName === 'DROP DOWN MAMA') return 'bg-dropdown-mama';
     if (bandName === '2120 BLUES BAND') return 'bg-2120-blues';
@@ -33,11 +32,10 @@ function getBandColorClass(bandName) {
     return 'bg-default-band';
 }
 
-// バンド名に応じたカラーコード（Hex）を返すヘルパー関数（カレンダー用）
 function getBandHexColor(bandName) {
-    if (bandName === 'DROP DOWN MAMA') return '#1a365d'; // ネイビー
-    if (bandName === '2120 BLUES BAND') return '#800020'; // ワインレッド
-    if (bandName === 'スズナPA') return '#00ced1'; // ターコイズ
+    if (bandName === 'DROP DOWN MAMA') return '#1a365d'; 
+    if (bandName === '2120 BLUES BAND') return '#800020'; 
+    if (bandName === 'スズナPA') return '#00ced1'; 
     return '#4a5568';
 }
 
@@ -74,16 +72,18 @@ function renderView() {
             const venueDisplay = item.url ? `<a href="${item.url}" target="_blank" class="text-decoration-none fw-bold text-dark">${item.venue} 🔗</a>` : `<span class="fw-bold">${item.venue}</span>`;
             const noteDisplay = item.note ? `<span class="text-muted small d-block">ℹ️ ${item.note}</span>` : '';
             
-            // バンドに応じたバッジのクラスを取得
             const badgeClass = getBandColorClass(item.band);
 
+            // 【修正ポイント】d-flex md-row を使い、PC版（md以上）でのみ横並び、スマホ版では強制縦並びに変更
             listView.innerHTML += `
                 <div class="col-12 col-md-12 mb-2">
                     <div class="card shadow-sm live-card">
                         <div class="card-body">
-                            <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                            <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-1 gap-md-2 mb-1">
                                 <h6 class="card-title text-primary fw-bold m-0">${item.date} (${dayOfWeek})</h6>
-                                <span class="badge ${badgeClass}">${item.band}</span>
+                                <div>
+                                    <span class="badge ${badgeClass}">${item.band}</span>
+                                </div>
                             </div>
                             <p class="card-text text-dark">
                                 ${venueDisplay}
@@ -107,7 +107,7 @@ function initCalendar(data) {
         title: `${item.band} @${item.venue}`,
         start: item.date,
         url: item.url || null,
-        backgroundColor: getBandHexColor(item.band), // 連動カラーコードを適用
+        backgroundColor: getBandHexColor(item.band), 
         borderColor: 'transparent'
     }));
 
