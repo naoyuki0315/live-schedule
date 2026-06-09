@@ -1,4 +1,4 @@
-// 【設定】スプレッドシートの「Webに公開」で取得したCSVのURLをここに貼り付けてください
+// 【固定設定】ご指定のスプレッドシート公開CSVのURLを組み込みました
 const SPREADSHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQluhuOEDERWVDgxgvKrY7cPLfIF2Qw38VP9BnjGxl318Sy5Fu2RBUm3lwIFot78JLO7-5TO3b5oy1_/pub?gid=544725873&single=true&output=csv";
 
 let liveData = []; 
@@ -31,12 +31,10 @@ function fetchSpreadsheetData() {
         });
 }
 
-// スプレッドシートの日本語ヘッダーを読み込むための解析処理
 function parseCSV(text) {
     const lines = text.split(/\r\n|\n/);
     if (lines.length === 0 || lines[0] === "") return [];
 
-    // 1行目のヘッダー（日本語）を取得
     const headers = lines[0].split(',').map(h => h.replace(/^["']|["']$/g, '').trim());
     const result = [];
 
@@ -49,7 +47,6 @@ function parseCSV(text) {
         headers.forEach((header, index) => {
             let value = currentline[index] ? currentline[index].replace(/^["']|["']$/g, '').trim() : "";
             
-            // スプレッドシートの日付形式（2026/06/06）をカレンダー用（2026-06-06）に変換
             if (header === "日付" && value.includes("/")) {
                 value = value.replace(/\//g, "-");
             }
@@ -117,10 +114,8 @@ function getBandHexColor(bandName) {
 function renderView() {
     const todayStr = new Date().toISOString().split('T')[0];
     
-    // 【日本語化】item.date から item["日付"] に変更
     let upcomingData = liveData.filter(item => item["日付"] && item["日付"] >= todayStr);
 
-    // 【日本語化】item.band から item["バンド名"] に変更
     const filteredData = (currentBand === 'ALL') ? upcomingData : upcomingData.filter(item => item["バンド名"] === currentBand);
     filteredData.sort((a, b) => new Date(a["日付"]) - new Date(b["日付"]));
 
@@ -152,7 +147,6 @@ function renderView() {
             const dateObj = new Date(item["日付"]);
             const dayOfWeek = weekDays[dateObj.getDay()];
             
-            // 【日本語化】会場URL、会場名、エリア、時間帯、備考への紐付け
             const venueDisplay = item["会場URL"] ? `<a href="${item["会場URL"]}" target="_blank" class="text-decoration-none fw-bold text-dark">${item["会場名"]} 🔗</a>` : `<span class="fw-bold">${item["会場名"]}</span>`;
             const noteDisplay = item["備考"] ? `<span class="text-muted small d-block">ℹ️ ${item["備考"]}</span>` : '';
             
@@ -208,7 +202,6 @@ function updateCalendarTitleWithCount() {
 function initCalendar(data) {
     const calendarEl = document.getElementById('calendar');
     
-    // 【日本語化】カレンダーのイベント生成
     const calendarEvents = data.map(item => ({
         title: `${item["バンド名"]} @${item["会場名"]}`,
         start: item["日付"],
@@ -220,6 +213,7 @@ function initCalendar(data) {
     if (calendar) { calendar.destroy(); }
     calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
+        initialDate: new Date(),
         locale: 'ja',
         dayCellContent: function(e) {
             return e.dayNumberText.replace('日', '');
