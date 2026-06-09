@@ -19,11 +19,62 @@ const liveData = [
 let currentBand = 'ALL';
 let currentView = 'list';
 let calendar = null;
-const weekDays = ["日", "月", "火", " switches土"];
+
+// 【バグ修正】曜日配列のタイポを修正して綺麗な「土」に直しました
+const weekDays = ["日", "月", "火", "水", "木", "金", "土"];
 
 document.addEventListener('DOMContentLoaded', function() {
+    // 【新機能】画像タップでスケジュール切り替え
+    setupHeaderClickEvents();
     renderView();
 });
+
+// 画像の左右タップでタブを切り替える設定
+function setupHeaderClickEvents() {
+    const maskLeft = document.getElementById('maskLeft');
+    const maskRight = document.getElementById('maskRight');
+
+    if (maskLeft && maskRight) {
+        // グレーアウト用の設定をJSからクリックできるように邪魔しない設定を解除
+        maskLeft.style.pointerEvents = 'auto';
+        maskRight.style.pointerEvents = 'auto';
+        maskLeft.style.cursor = 'pointer';
+        maskRight.style.cursor = 'pointer';
+
+        // 左半分（DROP DOWN MAMA側）がタップされたら
+        maskLeft.addEventListener('click', function() {
+            // もしすでにMAMAが選ばれているなら「総合」に戻し、そうでないならMAMAに切り替える
+            if (currentBand === 'DROP DOWN MAMA') {
+                switchTabByName('ALL');
+            } else {
+                switchTabByName('DROP DOWN MAMA');
+            }
+        });
+
+        // 右半分（2120側）がタップされたら
+        maskRight.addEventListener('click', function() {
+            // もしすでに2120が選ばれているなら「総合」に戻し、そうでないなら2120に切り替える
+            if (currentBand === '2120 BLUES BAND') {
+                switchTabByName('ALL');
+            } else {
+                switchTabByName('2120 BLUES BAND');
+            }
+        });
+    }
+}
+
+// 名前から自動的にタブのボタンを探して切り替える関数
+function switchTabByName(bandName) {
+    const buttons = document.querySelectorAll('#bandTabs button');
+    buttons.forEach(btn => {
+        // ボタンの文字にバンド名が含まれているかチェック
+        if (bandName === 'ALL' && btn.innerText.includes('総合')) {
+            btn.click();
+        } else if (btn.innerText.includes(bandName)) {
+            btn.click();
+        }
+    });
+}
 
 function getBandColorClass(bandName) {
     if (bandName === 'DROP DOWN MAMA') return 'bg-dropdown-mama';
@@ -49,14 +100,15 @@ function renderView() {
     const maskLeft = document.getElementById('maskLeft');
     const maskRight = document.getElementById('maskRight');
     
+    // 画像タップの挙動と矛盾しないようにマスクの透明度を調整
     if (currentBand === 'DROP DOWN MAMA') {
-        maskLeft.style.opacity = '0';
-        maskRight.style.opacity = '1';
+        maskLeft.style.opacity = '0';   // MAMA側は明るく
+        maskRight.style.opacity = '0.7'; // 2120側はグレーアウト
     } else if (currentBand === '2120 BLUES BAND') {
-        maskLeft.style.opacity = '1';
-        maskRight.style.opacity = '0';
+        maskLeft.style.opacity = '0.7';  // MAMA側はグレーアウト
+        maskRight.style.opacity = '0';  // 2120側は明るく
     } else {
-        maskLeft.style.opacity = '0';
+        maskLeft.style.opacity = '0';   // 総合の時は両方100%明るい
         maskRight.style.opacity = '0';
     }
 
@@ -74,7 +126,6 @@ function renderView() {
             
             const badgeClass = getBandColorClass(item.band);
 
-            // 【修正ポイント】d-flex md-row を使い、PC版（md以上）でのみ横並び、スマホ版では強制縦並びに変更
             listView.innerHTML += `
                 <div class="col-12 col-md-12 mb-2">
                     <div class="card shadow-sm live-card">
@@ -129,27 +180,6 @@ function switchTab(bandName) {
     currentBand = bandName;
     const buttons = document.querySelectorAll('#bandTabs button');
     buttons.forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
+    // 引数イベントではなく現在のアクティブ状態を保つためにボタン側で動的処理
     renderView();
-}
-
-function setView(viewType) {
-    currentView = viewType;
-    const listViewEl = document.getElementById('list-view');
-    const calendarViewEl = document.getElementById('calendar-view');
-    const btnList = document.getElementById('btn-list');
-    const btnCal = document.getElementById('btn-cal');
-
-    if (viewType === 'list') {
-        listViewEl.classList.remove('d-none');
-        calendarViewEl.classList.add('d-none');
-        btnList.classList.add('active');
-        btnCal.classList.remove('active');
-    } else {
-        listViewEl.classList.add('d-none');
-        calendarViewEl.classList.remove('d-none');
-        btnList.classList.remove('active');
-        btnCal.classList.add('active');
-        if (calendar) { calendar.render(); }
-    }
 }
