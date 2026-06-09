@@ -100,8 +100,8 @@ function renderView() {
         maskRight.style.opacity = '0';
     }
 
-    // 【新機能】件数を計算して、リスト用とカレンダー用の両方の表示エリアに書き込む
-    const countText = `現在、${filteredData.length} 件のライブ予定があります。`;
+    // 全体の件数（リストの上に表示するもの）
+    const countText = `これから開催予定のライブ：${filteredData.length} 件`;
     document.getElementById('live-count-list').innerText = countText;
     document.getElementById('live-count-calendar').innerText = countText;
 
@@ -145,6 +145,33 @@ function renderView() {
     initCalendar(filteredData);
 }
 
+// 【新機能】今カレンダーに表示されている「月」のイベント件数を数えてタイトルに追記する関数
+function updateCalendarTitleWithCount() {
+    if (!calendar) return;
+
+    // 現在表示されているカレンダーの「年月」を取得
+    const currentPeriod = calendar.getDate(); 
+    const currentYear = currentPeriod.getFullYear();
+    const currentMonth = currentPeriod.getMonth(); // 0が1月, 5が6月...
+
+    // 現在表示中のイベントリストを取得
+    const events = calendar.getEvents();
+    
+    // その月に含まれるイベントだけをカウント
+    const monthCount = events.filter(event => {
+        const eventDate = event.start;
+        return eventDate.getFullYear() === currentYear && eventDate.getMonth() === currentMonth;
+    }).length;
+
+    // カレンダーのタイトル要素（「2026年6月」などと書かれている部分）を見つけて書き換える
+    const titleEl = document.querySelector('.fc .fc-toolbar-title');
+    if (titleEl) {
+        // 元のタイトル（例: 2026年6月）をベースに、横に件数を付け足す
+        const baseTitle = titleEl.innerText.split('(')[0].trim();
+        titleEl.innerText = `${baseTitle} (${monthCount}件)`;
+    }
+}
+
 function initCalendar(data) {
     const calendarEl = document.getElementById('calendar');
     const calendarEvents = data.map(item => ({
@@ -164,9 +191,16 @@ function initCalendar(data) {
         },
         events: calendarEvents,
         headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
-        height: 'auto'
+        height: 'auto',
+        // 【重要】月が切り替わったり、データが読み込まれた瞬間に件数を数えてタイトルを書き換える
+        datesSet: function() {
+            setTimeout(updateCalendarTitleWithCount, 10); // 描画完了を少し待ってから実行
+        }
     });
-    if (currentView === 'calendar') { calendar.render(); }
+    if (currentView === 'calendar') { 
+        calendar.render(); 
+        setTimeout(updateCalendarTitleWithCount, 10);
+    }
 }
 
 function switchTab(bandName) {
@@ -193,6 +227,9 @@ function setView(viewType) {
         calendarViewEl.classList.remove('d-none');
         btnList.classList.remove('active');
         btnCal.classList.add('active');
-        if (calendar) { calendar.render(); }
+        if (calendar) { 
+            calendar.render(); 
+            setTimeout(updateCalendarTitleWithCount, 10);
+        }
     }
 }
