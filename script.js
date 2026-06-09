@@ -1,21 +1,7 @@
-const liveData = [
-  { "date": "2026-06-06", "band": "DROP DOWN MAMA", "venue": "戸塚ベイブルース", "location": "神奈川県横浜市", "time": "昼・午後", "note": "", "url": "", "flyer": "" },
-  { "date": "2026-06-27", "band": "DROP DOWN MAMA", "venue": "イセヤセラヴィ", "location": "神奈川県横浜市", "time": "昼・午後", "note": "", "url": "", "flyer": "" },
-  { "date": "2026-06-28", "band": "DROP DOWN MAMA", "venue": "本牧ゴールデンカップ", "location": "神奈川県横浜市", "time": "午後・夕方", "note": "", "url": "", "flyer": "" },
-  { "date": "2026-07-05", "band": "スズナPA", "venue": "kt.Bears", "location": "神奈川県横浜市", "time": "午後", "note": "ミュージックバー", "url": "", "flyer": "" },
-  { "date": "2026-07-11", "band": "DROP DOWN MAMA", "venue": "ミッシェル", "location": "神奈川県秦野市", "time": "夜", "note": "ライブレストラン", "url": "", "flyer": "" },
-  { "date": "2026-07-12", "band": "DROP DOWN MAMA", "venue": "綱島フライドポテト", "location": "神奈川県横浜市", "time": "夕方・夜", "note": "1ドリンク付1100円", "url": "", "flyer": "" },
-  { "date": "2026-07-18", "band": "2120 BLUES BAND", "venue": "武蔵小山cool smile66", "location": "東京都品川区", "time": "夕方・夜", "note": "ライブバー", "url": "", "flyer": "" },
-  { "date": "2026-08-15", "band": "DROP DOWN MAMA", "venue": "イセヤセラヴィ", "location": "神奈川県横浜市", "time": "夜", "note": "", "url": "", "flyer": "" },
-  { "date": "2026-09-05", "band": "2120 BLUES BAND", "venue": "y's SOUND BASE", "location": "神奈川県厚木市", "time": "昼・午後・夕方・夜", "note": "", "url": "", "flyer": "" },
-  { "date": "2026-09-19", "band": "DROP DOWN MAMA", "venue": "大船ハニービー", "location": "神奈川県鎌倉市", "time": "昼・午後", "note": "", "url": "", "flyer": "" },
-  { "date": "2026-10-04", "band": "2120 BLUES BAND", "venue": "kt.Bears", "location": "神奈川県横浜市", "time": "昼・午後", "note": "ミュージックバー", "url": "", "flyer": "" },
-  { "date": "2026-10-10", "band": "2120 BLUES BAND", "venue": "Ｈｅｙ−ＪＯＥ", "location": "神奈川県横浜市", "time": "昼・午後", "note": "Live House", "url": "", "flyer": "" },
-  { "date": "2026-10-11", "band": "2120 BLUES BAND", "venue": "kt.Bears", "location": "神奈川県横浜市", "time": "昼・午後", "note": "横濱ジャズプロムナード", "url": "", "flyer": "" },
-  { "date": "2026-10-24", "band": "DROP DOWN MAMA", "venue": "渋谷nob", "location": "東京都渋谷区", "time": "昼・午後", "note": "", "url": "", "flyer": "" },
-  { "date": "2026-11-03", "band": "2120 BLUES BAND", "venue": "赤坂エルカミーノ", "location": "東京都港区", "time": "昼・午後", "note": "", "url": "", "flyer": "" }
-];
+// 【設定】スプレッドシートの「Webに公開」で取得したCSVのURLをここに貼り付けてください
+const SPREADSHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQluhuOEDERWVDgxgvKrY7cPLfIF2Qw38VP9BnjGxl318Sy5Fu2RBUm3lwIFot78JLO7-5TO3b5oy1_/pub?gid=544725873&single=true&output=csv";
 
+let liveData = []; // スプレッドシートから読み込んだデータがここに入ります
 let currentBand = 'ALL';
 let currentView = 'list';
 let calendar = null;
@@ -23,8 +9,57 @@ const weekDays = ["日", "月", "火", "水", "木", "金", "土"];
 
 document.addEventListener('DOMContentLoaded', function() {
     setupHeaderClickEvents();
-    renderView();
+    fetchSpreadsheetData(); // 画面を開いた瞬間にデータを読み込む
 });
+
+// CSVデータをスプレッドシートから取得する関数
+function fetchSpreadsheetData() {
+    const listView = document.getElementById('list-view');
+    listView.innerHTML = '<p class="text-center text-muted py-5">最新のスケジュールを読み込み中...</p>';
+
+    fetch(SPREADSHEET_CSV_URL)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('データの読み込みに失敗しました。');
+            }
+            return response.text();
+        })
+        .then(csvText => {
+            liveData = parseCSV(csvText); // CSVをプログラムで使える形に変換
+            renderView(); // 画面を描画
+        })
+        .catch(error => {
+            console.error(error);
+            listView.innerHTML = '<p class="text-center text-danger py-5">スケジュールデータの読み込みに失敗しました。<br>スプレッドシートの「Webに公開」設定を確認してください。</p>';
+        });
+}
+
+// 簡易的なCSV解析関数（1行目をヘッダーとしてオブジェクトの配列を作る）
+function parseCSV(text) {
+    // 改行コードで分割
+    const lines = text.split(/\r\n|\n/);
+    if (lines.length === 0 || lines[0] === "") return [];
+
+    // 1行目から項目名（ヘッダー）を取得して、前後の不要な空白や引用符を消す
+    const headers = lines[0].split(',').map(h => h.replace(/^["']|["']$/g, '').trim());
+    const result = [];
+
+    for (let i = 1; i < lines.length; i++) {
+        if (lines[i].trim() === "") continue; // 空行はスキップ
+        
+        // カンマで分割（簡易版。項目内にカンマが含まれない前提）
+        const currentline = lines[i].split(',');
+        const obj = {};
+        
+        headers.forEach((header, index) => {
+            let value = currentline[index] ? currentline[index].replace(/^["']|["']$/g, '').trim() : "";
+            obj[header] = value;
+        });
+        
+        result.push(obj);
+    }
+    return result;
+}
 
 function setupHeaderClickEvents() {
     const maskLeft = document.getElementById('maskLeft');
@@ -81,7 +116,8 @@ function getBandHexColor(bandName) {
 
 function renderView() {
     const todayStr = new Date().toISOString().split('T')[0];
-    let upcomingData = liveData.filter(item => item.date >= todayStr);
+    // 今日以降のデータのみに絞り込む
+    let upcomingData = liveData.filter(item => item.date && item.date >= todayStr);
 
     const filteredData = (currentBand === 'ALL') ? upcomingData : upcomingData.filter(item => item.band === currentBand);
     filteredData.sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -100,7 +136,6 @@ function renderView() {
         maskRight.style.opacity = '0';
     }
 
-    // 全体の件数（リストの上に表示するもの）
     const countText = `これから開催予定のライブ：${filteredData.length} 件`;
     document.getElementById('live-count-list').innerText = countText;
     document.getElementById('live-count-calendar').innerText = countText;
@@ -145,28 +180,22 @@ function renderView() {
     initCalendar(filteredData);
 }
 
-// 【新機能】今カレンダーに表示されている「月」のイベント件数を数えてタイトルに追記する関数
 function updateCalendarTitleWithCount() {
     if (!calendar) return;
 
-    // 現在表示されているカレンダーの「年月」を取得
     const currentPeriod = calendar.getDate(); 
     const currentYear = currentPeriod.getFullYear();
-    const currentMonth = currentPeriod.getMonth(); // 0が1月, 5が6月...
+    const currentMonth = currentPeriod.getMonth(); 
 
-    // 現在表示中のイベントリストを取得
     const events = calendar.getEvents();
     
-    // その月に含まれるイベントだけをカウント
     const monthCount = events.filter(event => {
         const eventDate = event.start;
         return eventDate.getFullYear() === currentYear && eventDate.getMonth() === currentMonth;
     }).length;
 
-    // カレンダーのタイトル要素（「2026年6月」などと書かれている部分）を見つけて書き換える
     const titleEl = document.querySelector('.fc .fc-toolbar-title');
     if (titleEl) {
-        // 元のタイトル（例: 2026年6月）をベースに、横に件数を付け足す
         const baseTitle = titleEl.innerText.split('(')[0].trim();
         titleEl.innerText = `${baseTitle} (${monthCount}件)`;
     }
@@ -192,9 +221,8 @@ function initCalendar(data) {
         events: calendarEvents,
         headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
         height: 'auto',
-        // 【重要】月が切り替わったり、データが読み込まれた瞬間に件数を数えてタイトルを書き換える
         datesSet: function() {
-            setTimeout(updateCalendarTitleWithCount, 10); // 描画完了を少し待ってから実行
+            setTimeout(updateCalendarTitleWithCount, 10); 
         }
     });
     if (currentView === 'calendar') { 
