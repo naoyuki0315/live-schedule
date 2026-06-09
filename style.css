@@ -1,10 +1,29 @@
-/* ヘッダー画像のレスポンシブ配置 */
+/* ==========================================
+   全体のレイアウト（中央よせ・幅の制限）
+   ========================================== */
+body {
+    font-family: sans-serif;
+    padding: 20px;
+    background-color: #f8f9fa;
+}
+
+/* 画面全体の最大幅を制限して中央に寄せる（カレンダーやリストも連動） */
+.container {
+    max-width: 600px !important; /* 全体のサイズを約半分（600px）にギュッと絞る */
+    margin: 0 auto !important;
+}
+
+/* ==========================================
+   ヘッダー画像（半分サイズ・中央よせ）
+   ========================================== */
 .header-container {
     position: relative;
     width: 100%;
-    max-width: 1000px;
-    margin: 0 auto;
+    max-width: 500px; /* 画像の最大サイズを半分程度に制限 */
+    margin: 0 auto 20px auto; /* 下に20pxのマージンをあけつつ中央よせ */
     overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* 軽めの影をつけて引き締める */
+    border-radius: 8px; /* 角を少し丸める */
 }
 
 .header-img {
@@ -13,34 +32,66 @@
     display: block;
 }
 
-/* グレーアウト用のマスク（初期状態は透明度0＝通常表示） */
+/* グレーアウト用のマスク */
 .mask {
     position: absolute;
     top: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.65); /* 渋く暗めにする黒フィルター */
+    background-color: rgba(0, 0, 0, 0.7); /* グレーアウト時を少し濃くしてメリハリを強化 */
     transition: opacity 0.3s ease;
     opacity: 0;
-    pointer-events: none; /* 下の画像やリンクの邪魔をしない設定 */
+    pointer-events: none;
 }
 
-/* 左側（Drop Down Mama側）の守備範囲 */
-.mask-left {
-    left: 0;
-    width: 50%;
+.mask-left { left: 0; width: 50%; }
+.mask-right { right: 0; width: 50%; }
+
+/* ==========================================
+   タブ・ボタンの装飾
+   ========================================== */
+.nav-pills .nav-link.active {
+    background-color: #1a365d !important;
+    color: white !important;
 }
 
-/* 右側（2120側）の守備範囲 */
-.mask-right {
-    right: 0;
-    width: 50%;
+.nav-pills .nav-link {
+    color: #4a5568;
+    font-weight: bold;
+    font-size: 0.9rem; /* ボタンの文字も少し小さめに */
+    padding: 8px 12px;
 }
 
-/* これ以降は前回のCSSと同じ */
-.nav-pills .nav-link.active { background-color: #1a365d !important; color: white !important; }
-.nav-pills .nav-link { color: #4a5568; font-weight: bold; }
-.live-card { border-left: 5px solid #1a365d; transition: transform 0.2s; }
-.live-card:hover { transform: translateY(-2px); }
-#calendar { max-width: 900px; margin: 0 auto; }
-.fc-day-sat a { color: #0000ff; }
-.fc-day-sun a { color: #ff0000; }
+/* ==========================================
+   ライブ情報のカード（リスト表示の1枠）
+   ========================================== */
+.live-card {
+    border-left: 5px solid #1a365d;
+    transition: transform 0.2s;
+    background-color: #ffffff;
+}
+
+.live-card:hover {
+    transform: translateY(-2px);
+}
+
+/* ==========================================
+   カレンダー（文字サイズなどをミニマルに調整）
+   ========================================== */
+#calendar {
+    width: 100%;
+    margin: 0 auto;
+    font-size: 0.85rem; /* カレンダーが小さくなっても文字が溢れないように縮小 */
+}
+
+/* カレンダー内の余白を狭くしてコンパクトに */
+.fc .fc-daygrid-body {
+    font-size: 0.85rem;
+}
+
+.fc .fc-toolbar-title {
+    font-size: 1.2rem !important; /* 「〇年〇月」の文字サイズ調整 */
+}
+
+/* 曜日ごとの色 */
+.fc-day-sat a { color: #0000ff; } /* 土曜日は青 */
+.fc-day-sun a { color: #ff0000; } /* 日曜・祝日は赤 */
