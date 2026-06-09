@@ -7,29 +7,29 @@ body {
     background-color: #f8f9fa;
 }
 
-/* 画面全体の最大幅を制限して中央に寄せる（カレンダーやリストも連動） */
+/* 画面全体の最大幅を制限（PC版で横並びにするため最大800pxに拡張） */
 .container {
-    max-width: 600px !important; /* 全体のサイズを約半分（600px）にギュッと絞る */
+    max-width: 800px !important;
     margin: 0 auto !important;
 }
 
 /* ==========================================
-   ヘッダー画像（1/4サイズ・アイコン風中央よせ）
+   ヘッダー画像（1/4サイズ・四角・高さ半分・中央よせ）
    ========================================== */
 .header-container {
     position: relative;
-    width: 250px; /* 画像のサイズをさらに半分（1/4相当）にする */
-    margin: 0 auto 30px auto; /* 下に30pxのマージンをあけつつ中央よせ */
+    width: 250px; /* 横幅は1/4サイズ（250px） */
+    height: 65px; /* 高さを半分（約65px）に制限 */
+    margin: 0 auto 30px auto; /* 周りに余白を持たせて中央よせ */
     overflow: hidden;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* 軽めの影をつけて引き締める */
-    border-radius: 50%; /* 正円のアイコン風にする */
-    aspect-ratio: 1 / 1; /* 正方形を維持 */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    border-radius: 4px; /* 緩やかな四角 */
 }
 
 .header-img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* 画像を正円の中に綺麗に収める */
+    object-fit: cover; /* 四角い枠の中に綺麗におさめる */
     display: block;
 }
 
@@ -38,7 +38,7 @@ body {
     position: absolute;
     top: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.7); /* グレーアウト時を少し濃くしてメリハリを強化 */
+    background-color: rgba(0, 0, 0, 0.7);
     transition: opacity 0.3s ease;
     opacity: 0;
     pointer-events: none;
@@ -58,63 +58,68 @@ body {
 .nav-pills .nav-link {
     color: #4a5568;
     font-weight: bold;
-    font-size: 0.9rem; /* ボタンの文字も少し小さめに */
+    font-size: 0.9rem;
     padding: 8px 12px;
 }
 
 /* ==========================================
-   ライブ情報のカード（リスト表示の1枠）
+   ライブ情報のカード（リスト表示：高さ半分・極小デザイン）
    ========================================== */
 .live-card {
     border-left: 5px solid #1a365d;
     transition: transform 0.2s;
     background-color: #ffffff;
-    padding: 10px; /* 余白を狭くする */
+    height: 100%; /* 横並び時に高さを揃える */
 }
 
 .live-card:hover {
     transform: translateY(-2px);
 }
 
+/* 中の余白を極限まで削って「高さ半分」を実現 */
+.live-card .card-body {
+    padding: 8px 12px !important; 
+}
+
 .live-card .card-title {
-    font-size: 1.1rem; /* 日付の文字を少し小さく */
-    margin-bottom: 5px;
-}
-
-.live-card .badge {
-    font-size: 0.8rem; /* バンド名の文字を小さく */
-}
-
-.live-card .card-text {
-    font-size: 0.9rem; /* 会場名や時間の文字を小さく */
+    font-size: 1.0rem; /* 日付の文字を小さく */
     margin-bottom: 2px;
 }
 
+.live-card .badge {
+    font-size: 0.75rem;
+    padding: 3px 6px;
+}
+
+.live-card .card-text {
+    font-size: 0.85rem; /* 文字を全体的に小さく */
+    margin-bottom: 1px;
+}
+
 /* ==========================================
-   カレンダー（文字サイズなどをミニマルに調整）
+   カレンダー（スマホ用の高さ制限を維持）
    ========================================== */
 #calendar {
     width: 100%;
     margin: 0 auto;
-    font-size: 0.85rem; /* カレンダーが小さくなっても文字が溢れないように縮小 */
+    font-size: 0.85rem;
 }
 
-/* カレンダー内の余白を狭くしてコンパクトに */
 .fc .fc-daygrid-body {
     font-size: 0.85rem;
 }
 
 .fc .fc-toolbar-title {
-    font-size: 1.2rem !important; /* 「〇年〇月」の文字サイズ調整 */
+    font-size: 1.2rem !important;
 }
 
 /* スマホ版のカレンダーの1マスの高さを半分に */
 @media (max-width: 768px) {
     .fc .fc-daygrid-day-frame {
-        height: 50px !important; /* 高さを50pxに固定 */
+        height: 50px !important;
     }
 }
 
 /* 曜日ごとの色 */
-.fc-day-sat a { color: #0000ff; } /* 土曜日は青 */
-.fc-day-sun a { color: #ff0000; } /* 日曜・祝日は赤 */
+.fc-day-sat a { color: #0000ff; }
+.fc-day-sun a { color: #ff0000; }
