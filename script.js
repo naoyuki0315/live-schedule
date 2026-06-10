@@ -1,4 +1,4 @@
-// 【固定設定】ご指定のスプレッドシート公開CSVのURL
+// 【固定設定】スプレッドシート公開CSVのURL
 const SPREADSHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQluhuOEDERWVDgxgvKrY7cPLfIF2Qw38VP9BnjGxl318Sy5Fu2RBUm3lwIFot78JLO7-5TO3b5oy1_/pub?gid=544725873&single=true&output=csv";
 
 let liveData = []; 
@@ -9,8 +9,8 @@ let calendar = null;
 const weekDays = ["日", "月", "火", "水", "木", "金", "土"];
 
 document.addEventListener('DOMContentLoaded', function() {
-    setupHeaderClickEvents(); // 1. 【復活】ヘッダー画像のタップイベントを設定
-    fetchSpreadsheetData(); // 2. データを読み込む
+    setupHeaderClickEvents(); // ヘッダー画像左右タップギミックの初期化
+    fetchSpreadsheetData(); 
 });
 
 function fetchSpreadsheetData() {
@@ -28,7 +28,7 @@ function fetchSpreadsheetData() {
         })
         .catch(error => {
             console.error(error);
-            listView.innerHTML = '<p class="text-center text-danger py-5">スケジュールデータの読み込みに失敗しました。<br>スプレッドシートの「Webに公開」設定を確認してください。</p>';
+            listView.innerHTML = '<p class="text-center text-danger py-5">データの読み込みに失敗しました。</p>';
         });
 }
 
@@ -53,51 +53,50 @@ function parseCSV(text) {
             obj[header] = value;
         });
         
-        obj["id"] = i;
+        obj["id"] = i; // 一意の識別ID
         result.push(obj);
     }
     return result;
 }
 
-// 【復活】画面上部のyour-header-image.jpgを狙う左右タップギミックの設定
+// 【最優先復活】ヘッダー画像の左右タップギミック
 function setupHeaderClickEvents() {
     const maskLeft = document.getElementById('maskLeft');
     const maskRight = document.getElementById('maskRight');
 
     if (maskLeft && maskRight) {
-        maskLeft.style.pointerEvents = 'auto'; // タップを検知できるようにする
+        maskLeft.style.pointerEvents = 'auto';
         maskRight.style.pointerEvents = 'auto';
-        maskLeft.style.cursor = 'pointer'; // カーソルを指マークにする
+        maskLeft.style.cursor = 'pointer';
         maskRight.style.cursor = 'pointer';
 
-        // 画面左側（DROP DOWN MAMAエリア）タップ時の動き
+        // 左側（MAMAエリア）タップ
         maskLeft.addEventListener('click', function() {
             if (currentBand === 'DROP DOWN MAMA') {
-                switchTabByName('ALL'); // すでにMAMAなら総合へ
+                switchTabByName('ALL');
             } else {
-                switchTabByName('DROP DOWN MAMA'); // MAMAへ切り替え
+                switchTabByName('DROP DOWN MAMA');
             }
         });
 
-        // 画面右側（2120 BLUES BANDエリア）タップ時の動き
+        // 右側（2120エリア）タップ
         maskRight.addEventListener('click', function() {
             if (currentBand === '2120 BLUES BAND') {
-                switchTabByName('ALL'); // すでに2120なら総合へ
+                switchTabByName('ALL');
             } else {
-                switchTabByName('2120 BLUES BAND'); // 2120へ切り替え
+                switchTabByName('2120 BLUES BAND');
             }
         });
     }
 }
 
-// 【復活】ヘッダー画像のタップから呼び出されて、下のタブを自動的にクリックする関数
 function switchTabByName(bandName) {
     const buttons = document.querySelectorAll('#bandTabs button');
     buttons.forEach(btn => {
         if (bandName === 'ALL' && btn.innerText.includes('総合')) {
-            btn.click(); // 「総合」と書かれたボタンをクリック
+            btn.click();
         } else if (btn.innerText.includes(bandName)) {
-            btn.click(); // バンド名が含まれるボタンをクリック
+            btn.click();
         }
     });
 }
@@ -116,6 +115,7 @@ function getBandHexColor(bandName) {
     return '#4a5568';
 }
 
+// 「今月」「来月」「〇月」の見出し判定
 function getMonthLabel(dateStr) {
     const targetDate = new Date(dateStr);
     const today = new Date();
@@ -136,82 +136,76 @@ function renderView() {
     if (currentView === 'detail') return;
 
     const todayStr = new Date().toISOString().split('T')[0];
-    let upcomingData = liveData.filter(item => item["日付"] && item["日付"] >= todayStr);
+    
+    // まず選択されたバンドで全データを絞り込む（過去ログ対応の母体）
+    let bandFilteredData = (currentBand === 'ALL') ? liveData : liveData.filter(item => item["バンド名"] === currentBand);
 
-    const filteredData = (currentBand === 'ALL') ? upcomingData : upcomingData.filter(item => item["バンド名"] === currentBand);
-    filteredData.sort((a, b) => new Date(a["日付"]) - new Date(b["日付"]));
+    // 【仕様】リスト表示は「今日以降（未来）」のみに限定
+    let upcomingData = bandFilteredData.filter(item => item["日付"] && item["日付"] >= todayStr);
+    upcomingData.sort((a, b) => new Date(a["日付"]) - new Date(b["日付"]));
 
-    // ヘッダー画像のマスクレイヤー制御（タップに合わせて半透明に）
+    // ヘッダーマスクの濃淡ギミック制御
     const maskLeft = document.getElementById('maskLeft');
     const maskRight = document.getElementById('maskRight');
     if (currentBand === 'DROP DOWN MAMA') {
         maskLeft.style.opacity = '0';   
-        maskRight.style.opacity = '0.7'; 
+        maskRight.style.opacity = '0.6'; 
     } else if (currentBand === '2120 BLUES BAND') {
-        maskLeft.style.opacity = '0.7';  
+        maskLeft.style.opacity = '0.6';  
         maskRight.style.opacity = '0';  
     } else {
         maskLeft.style.opacity = '0';   
         maskRight.style.opacity = '0';
     }
 
-    const countText = `これから開催予定のライブ：${filteredData.length} 件`;
-    document.getElementById('live-count-list').innerText = countText;
-    document.getElementById('live-count-calendar').innerText = countText;
+    // 件数テキストの更新（リスト側は未来の件数）
+    document.getElementById('live-count-list').innerText = `これから開催予定のライブ：${upcomingData.length} 件`;
 
     const listView = document.getElementById('list-view');
     listView.innerHTML = '';
 
-    if (filteredData.length === 0) {
+    if (upcomingData.length === 0) {
         listView.innerHTML = '<p class="text-center text-muted py-5">これから開催予定のライブはありません。</p>';
     } else {
         let lastMonthLabel = '';
 
-        filteredData.forEach(item => {
+        upcomingData.forEach(item => {
             const dateObj = new Date(item["日付"]);
             const dayOfWeek = weekDays[dateObj.getDay()];
             
+            // 月替わりの自動見出し挿入
             const currentMonthLabel = getMonthLabel(item["日付"]);
             if (currentMonthLabel !== lastMonthLabel) {
                 listView.innerHTML += `
-                    <div class="col-12 mt-3 mb-2 animate-fade-in">
-                        <h4 class="border-start border-4 border-primary ps-2 bg-light py-1 fw-bold text-dark month-header">${currentMonthLabel}</h4>
+                    <div class="col-12 mt-4 mb-2 animate-fade-in">
+                        <h5 class="border-start border-4 border-primary ps-2 py-1 fw-bold text-secondary bg-white shadow-sm rounded-end">${currentMonthLabel}</h5>
                     </div>
                 `;
                 lastMonthLabel = currentMonthLabel;
             }
 
-            const venueDisplay = `<span class="fw-bold">${item["会場名"]}</span>`;
+            // 【仕様】リスト側はフライヤー画像を出さず、「フライヤーあり 🔗」のバッジでお知らせ
+            const hasFlyer = item["フライヤー"] && item["フライヤー"].trim().startsWith('http');
+            const flyerBadge = hasFlyer ? `<span class="badge bg-info text-dark ms-2">フライヤーあり 🔗</span>` : '';
+
+            const venueDisplay = `<span class="fw-bold text-dark">${item["会場名"]}</span>`;
             const noteDisplay = item["備考"] ? `<div class="text-muted small mt-2">ℹ️ ${item["備考"]}</div>` : '';
-            
-            let flyerDisplay = '';
-            if (item["フライヤー"] && item["フライヤー"].trim().startsWith('http')) {
-                flyerDisplay = `
-                    <div class="mt-3 text-center">
-                        <img src="${item["フライヤー"].trim()}" alt="フライヤー" class="img-fluid rounded shadow-sm" style="max-height: 200px; object-fit: contain;">
-                    </div>
-                `;
-            }
-            
             const badgeClass = getBandColorClass(item["バンド名"]);
 
             listView.innerHTML += `
-                <div class="col-12 col-md-12 mb-2" onclick="showDetailView(${item.id})" style="cursor: pointer;">
-                    <div class="card shadow-sm live-card h-100 hover-shadow animate-fade-in">
-                        <div class="card-body">
-                            <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-1 gap-md-2 mb-1">
-                                <h6 class="card-title text-primary fw-bold m-0">${item["日付"]} (${dayOfWeek})</h6>
-                                <div>
-                                    <span class="badge ${badgeClass}">${item["バンド名"]}</span>
-                                </div>
+                <div class="col-12 mb-2 animate-fade-in" onclick="showDetailView(${item.id})" style="cursor: pointer;">
+                    <div class="card shadow-sm live-card border-0">
+                        <div class="card-body py-3">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <h6 class="text-primary fw-bold m-0">${item["日付"]} (${dayOfWeek})</h6>
+                                <span class="badge ${badgeClass}">${item["バンド名"]}</span>
+                                ${flyerBadge}
                             </div>
-                            <p class="card-text text-dark mb-1">
-                                ${venueDisplay}
-                                <span class="loc-break text-muted style-small">(${item["エリア"]})</span>
+                            <p class="card-text mb-1">
+                                ${venueDisplay} <span class="text-muted small">(${item["エリア"]})</span>
                             </p>
-                            <p class="card-text text-dark mb-0">⏰ ${item["時間帯"]}</p>
+                            <p class="card-text text-secondary small mb-0">⏰ ${item["時間帯"]}</p>
                             ${noteDisplay}
-                            ${flyerDisplay}
                         </div>
                     </div>
                 </div>
@@ -219,7 +213,8 @@ function renderView() {
         });
     }
 
-    initCalendar(filteredData);
+    // 【仕様】カレンダーには過去ログもすべて含んだデータを引き渡す
+    initCalendar(bandFilteredData);
 }
 
 function updateCalendarTitleWithCount() {
@@ -230,22 +225,26 @@ function updateCalendarTitleWithCount() {
     const currentMonth = currentPeriod.getMonth(); 
 
     const events = calendar.getEvents();
+    // カレンダー上に表示されている、その月だけのイベントを正確にバックカウント
     const monthCount = events.filter(event => {
         const eventDate = event.start;
         return eventDate.getFullYear() === currentYear && eventDate.getMonth() === currentMonth;
     }).length;
 
+    // 件数表示の同期
+    document.getElementById('live-count-calendar').innerText = `${currentYear}年${currentMonth + 1}月 のライブ：${monthCount} 件`;
+
     const titleEl = document.querySelector('.fc .fc-toolbar-title');
     if (titleEl) {
-        const correctTitle = `${currentYear}年${currentMonth + 1}月`;
-        titleEl.innerText = `${correctTitle} (${monthCount}件)`;
+        titleEl.innerText = `${currentYear}年${currentMonth + 1}月 (${monthCount}件)`;
     }
 }
 
-function initCalendar(data) {
+function initCalendar(allBandData) {
     const calendarEl = document.getElementById('calendar');
     
-    const calendarEvents = data.map(item => ({
+    // 過去未来すべてのスケジュールをマッピング
+    const calendarEvents = allBandData.map(item => ({
         id: item.id, 
         title: `${item["バンド名"]} @${item["会場名"]}`,
         start: item["日付"],
@@ -272,12 +271,14 @@ function initCalendar(data) {
             setTimeout(updateCalendarTitleWithCount, 10); 
         }
     });
+    
     if (currentView === 'calendar') { 
         calendar.render(); 
         setTimeout(updateCalendarTitleWithCount, 10);
     }
 }
 
+// 【仕様】詳細画面 ＆ 極小フライヤーをタップしてアコーディオン開閉するギミック
 function showDetailView(id) {
     const item = liveData.find(live => live.id == id);
     if (!item) return;
@@ -295,28 +296,37 @@ function showDetailView(id) {
     const dayOfWeek = weekDays[dateObj.getDay()];
     const badgeClass = getBandColorClass(item["バンド名"]);
     
-    const venueDisplay = item["会場URL"] ? `<a href="${item["会場URL"]}" target="_blank" class="btn btn-primary btn-sm mt-2">会場公式サイトを開く 🔗</a>` : '';
-    const noteDisplay = item["備考"] ? `<div class="alert alert-secondary mt-3"><strong>ℹ️ 備考・詳細情報</strong><br>${item["備考"]}</div>` : '';
+    const venueDisplay = item["会場URL"] ? `<a href="${item["会場URL"]}" target="_blank" class="btn btn-outline-primary btn-sm mt-2 shadow-sm">会場公式サイトを開く 🔗</a>` : '';
+    const noteDisplay = item["備考"] ? `<div class="alert alert-secondary mt-3 small"><strong>ℹ️ 備考・詳細</strong><br>${item["備考"]}</div>` : '';
     
+    // 【極小アイコン仕様】実際のフライヤーを文字の約2倍サイズ(縦36px)に縮小し、クリックでトグル開閉
     let flyerDisplay = '';
     if (item["フライヤー"] && item["フライヤー"].trim().startsWith('http')) {
         flyerDisplay = `
-            <div class="mt-4 text-center">
-                <img src="${item["フライヤー"].trim()}" alt="フライヤー" class="img-fluid rounded shadow animate-fade-in" style="max-height: 500px; object-fit: contain;">
+            <div class="mt-4 border-top pt-3">
+                <div class="d-inline-flex align-items-center gap-2 p-2 bg-light border rounded shadow-sm" 
+                     onclick="toggleFlyerImage()" style="cursor: pointer; user-select: none;">
+                    <img src="${item["フライヤー"].trim()}" alt="極小フライヤー" style="height: 36px; width: auto; object-fit: contain; border-radius: 4px;">
+                    <span class="fw-bold text-primary small">⬅️ タップしてフライヤーを表示</span>
+                </div>
+                
+                <div id="full-size-flyer" class="mt-3 text-center d-none animate-fade-in">
+                    <img src="${item["フライヤー"].trim()}" alt="フライヤー拡大" class="img-fluid rounded shadow" style="max-height: 550px; object-fit: contain;">
+                </div>
             </div>
         `;
     }
 
     document.getElementById('detail-content').innerHTML = `
-        <div class="card shadow animate-fade-in border-0 mt-2">
+        <div class="card shadow border-0 mt-2">
             <div class="card-body p-4">
-                <span class="badge ${badgeClass} mb-2 fs-6">${item["バンド名"]}</span>
-                <h2 class="text-primary fw-bold mb-3">${item["日付"]} (${dayOfWeek})</h2>
+                <span class="badge ${badgeClass} mb-2">${item["バンド名"]}</span>
+                <h3 class="text-primary fw-bold mb-3">${item["日付"]} (${dayOfWeek})</h3>
                 
-                <h4 class="fw-bold text-dark mb-1">📍 ${item["会場名"]}</h4>
-                <p class="text-muted mb-3">（${item["エリア"]}）</p>
+                <h5 class="fw-bold text-dark mb-1">📍 会場: ${item["会場名"]}</h5>
+                <p class="text-muted small mb-3">（エリア：${item["エリア"]}）</p>
                 
-                <h5 class="text-dark mb-3">⏰ 時間帯: <strong>${item["時間帯"]}</strong></h5>
+                <h6 class="text-dark mb-3">⏰ 時間帯: <strong>${item["時間帯"]}</strong></h6>
                 
                 ${venueDisplay}
                 ${noteDisplay}
@@ -328,13 +338,20 @@ function showDetailView(id) {
     window.scrollTo(0, 0);
 }
 
+// 詳細画面のフライヤー画像をパッと表示/非表示にするトグル関数
+function toggleFlyerImage() {
+    const flyerContainer = document.getElementById('full-size-flyer');
+    if (flyerContainer) {
+        flyerContainer.classList.toggle('d-none');
+    }
+}
+
 function closeDetailView() {
     currentView = previousView;
     document.getElementById('detail-view').classList.add('d-none');
     setView(currentView);
 }
 
-// 下のタブボタンがクリックされた時の動き
 function switchTab(bandName) {
     currentBand = bandName;
     const buttons = document.querySelectorAll('#bandTabs button');
@@ -344,7 +361,7 @@ function switchTab(bandName) {
         document.getElementById('detail-view').classList.add('d-none');
         currentView = previousView;
     }
-    renderView(); // 画面を再描画（マスク画像の濃淡もここで変わる）
+    renderView(); 
 }
 
 function setView(viewType) {
