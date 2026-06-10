@@ -13,18 +13,17 @@
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     
     <style>
-        /* 以前お気に入りだった横長サイズ感を完全に再現 */
+        /* 【完全復元】最初にお気に入りだった「白の余白がある、小さいサイズ」のヘッダー */
         .header-bg-container {
             width: 100%;
-            height: 220px; /* お気に入りの高さ */
-            overflow: hidden;
+            height: 140px;       /* 画面を圧迫しない、すっきりした小さい高さ */
             position: relative;
-            background-color: #000;
+            background-color: #ffffff; /* 左右に綺麗に出る「白の余白」 */
         }
         .header-img {
             width: 100%;
             height: 100%;
-            object-fit: cover; /* 元の横長デザインをきれいに引き伸ばす設定に戻しました */
+            object-fit: contain; /* 画像を引き伸ばさず、中央にちょこんと収めて余白を作る設定 */
         }
         /* 左右のタップを検知する透明マスク */
         .mask-layer {
