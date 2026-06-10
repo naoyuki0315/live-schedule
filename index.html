@@ -13,26 +13,26 @@
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     
     <style>
-        /* 【完全修正】高さ80%・上余白・背景色馴染み・画像のみグレーアウト */
+        /* 高さ80%・上余白・背景色馴染み・画像のみグレーアウト */
         .header-bg-container {
             width: 100%;
-            height: 140px;             /* ヘッダーエリア全体の高さ */
-            background-color: #f8f9fa; /* 余白の色を白ではなく、アプリの背景色（bg-light）と同じにする */
+            height: 140px;             
+            background-color: #f8f9fa; /* アプリ背景の薄グレーに合わせる */
             display: flex;
             justify-content: center;
-            align-items: center;       /* これにより、上（および下）にきれいな余白が生まれます */
+            align-items: center;       
         }
         .header-img-wrapper {
             position: relative;
-            height: 80%;               /* 画像の高さを全体の80%に制限 */
-            display: inline-block;     /* 横幅を画像本来の幅にピタッと合わせる */
+            height: 80%;               
+            display: inline-block;     
         }
         .header-img {
             height: 100%;
-            width: auto;               /* 横幅は比率を維持して自動調整（絶対に歪みません） */
+            width: auto;               
             display: block;
         }
-        /* 左右のタップを検知する透明マスク（wrapperの内側なので、画像の上だけがグレーアウトします） */
+        /* 左右のタップを検知する透明マスク */
         .mask-layer {
             position: absolute;
             top: 0;
