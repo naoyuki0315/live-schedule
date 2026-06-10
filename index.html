@@ -13,18 +13,19 @@
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     
     <style>
-        /* ヘッダー画像とお気に入りのサイズ感・タップギミック用スタイル */
+        /* 【重要】お気に入りの横長サイズ感（高さ220px）を死守するスタイル */
         .header-bg-container {
             width: 100%;
-            height: 220px; /* お好みの横長サイズ感に合わせています */
+            height: 220px; /* ★以前お気に入りだった高さ */
             overflow: hidden;
             position: relative;
-            background-color: #000;
+            background-color: #000; /* 左右の余白を黒にする */
         }
         .header-img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            /* 【重要】縦長のフライヤーを、横長のヘッダー内にアスペクト比を維持して収める */
+            object-fit: contain; /* ★画像をトリミングせず、全体を中央に表示 */
         }
         /* 左右のタップを検知する透明マスク */
         .mask-layer {
@@ -64,7 +65,7 @@
 <body class="bg-light">
 
     <div class="header-bg-container text-center position-relative">
-        <img src="your-header-image.jpg" alt="Live Schedule" class="header-img">
+        <img src="https://github.com/naoyuki0315/live-schedule/blob/main/flyer-20260628.PNG?raw=true" alt="Live Schedule" class="header-img">
         <div id="maskLeft" class="mask-layer position-absolute top-0 start-0"></div>
         <div id="maskRight" class="mask-layer position-absolute top-0 end-0"></div>
     </div>
