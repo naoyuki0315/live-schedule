@@ -31,45 +31,58 @@ function fetchSpreadsheetData() {
         });
 }
 
+// 【大修正】セル内の改行・カンマを完璧にスキップしてI列のURLズレを100%防ぐ最強パース
 function parseCSV(text) {
-    const lines = text.split(/\r\n|\n/);
-    if (lines.length === 0 || lines[0] === "") return [];
+    let lines = [];
+    let row = [""];
+    let inQuotes = false;
 
-    const parseLine = (line) => {
-        const result = [];
-        let start = 0;
-        let inQuotes = false;
-        for (let i = 0; i < line.length; i++) {
-            if (line[i] === '"') {
+    // 1文字ずつ走査してクォーテーション内の改行やカンマを正しくセル内文字として処理
+    for (let i = 0; i < text.length; i++) {
+        let c = text[i];
+        let next = text[i+1];
+        if (c === '"') {
+            if (inQuotes && next === '"') {
+                row[row.length - 1] += '"';
+                i++;
+            } else {
                 inQuotes = !inQuotes;
-            } else if (line[i] === ',' && !inQuotes) {
-                result.push(line.substring(start, i));
-                start = i + 1;
             }
+        } else if (c === ',' && !inQuotes) {
+            row.push("");
+        } else if ((c === '\r' || c === '\n') && !inQuotes) {
+            if (c === '\r' && next === '\n') { i++; }
+            lines.push(row);
+            row = [""];
+        } else {
+            row[row.length - 1] += c;
         }
-        result.push(line.substring(start));
-        return result.map(v => v.replace(/^["']|["']$/g, '').trim());
-    };
+    }
+    if (row.length > 1 || row[0] !== "") {
+        lines.push(row);
+    }
+    if (lines.length === 0) return [];
 
-    const headers = parseLine(lines[0]);
+    const headers = lines[0].map(v => v.trim());
     const result = [];
 
     for (let i = 1; i < lines.length; i++) {
-        if (lines[i].trim() === "") continue; 
+        const currentline = lines[i];
+        if (currentline.length === 1 && currentline[0] === "") continue;
         
-        const currentline = parseLine(lines[i]);
         const obj = {};
-        
         headers.forEach((header, index) => {
-            let value = currentline[index] ? currentline[index] : "";
+            let value = currentline[index] ? currentline[index].trim() : "";
             if (header === "日付" && value.includes("/")) {
                 value = value.replace(/\//g, "-");
             }
             obj[header] = value;
         });
         
-        if (currentline[8] && currentline[8].startsWith('http')) {
-            obj["フライヤー"] = currentline[8];
+        // 左から9番目（I列＝インデックス8）からノイズを除去して確実にフライヤーURLとして絶対確保
+        let flyerUrl = currentline[8] ? currentline[8].trim() : "";
+        if (flyerUrl.startsWith('http')) {
+            obj["フライヤー"] = flyerUrl;
         } else {
             obj["フライヤー"] = "";
         }
@@ -186,7 +199,6 @@ function renderView() {
                 lastMonthLabel = currentMonthLabel;
             }
 
-            // 【仕様変更】一番下の行に、背景なし・頭にアイコンを添えて表示する用
             const hasFlyer = item["フライヤー"] && item["フライヤー"].trim().length > 0;
             const flyerRow = hasFlyer ? `<div class="text-secondary small mt-2 fw-bold">🖼️ フライヤーあり</div>` : '';
 
@@ -207,7 +219,8 @@ function renderView() {
                             </p>
                             <p class="card-text text-secondary small mb-0">⏰ ${item["時間帯"]}</p>
                             ${noteDisplay}
-                            ${flyerRow} </div>
+                            ${flyerRow}
+                        </div>
                     </div>
                 </div>
             `;
@@ -273,6 +286,7 @@ function initCalendar(allBandData) {
     }
 }
 
+// 3. 詳細画面（上部要素を完全消去 ＆ 正確なフライヤー表示）
 function showDetailView(id) {
     const item = liveData.find(live => live.id == id);
     if (!item) return;
@@ -281,6 +295,11 @@ function showDetailView(id) {
         previousView = currentView;
     }
     currentView = 'detail';
+
+    // 【修正】戻るボタンより上のパーツ（ヘッダー・表示タブ・総合等のタブ）をすべて非表示化！
+    document.getElementById('header-container').classList.add('d-none');
+    document.getElementById('view-tabs').classList.add('d-none');
+    document.getElementById('bandTabs').classList.add('d-none');
 
     document.getElementById('list-view-container').classList.add('d-none');
     document.getElementById('calendar-view').classList.add('d-none');
@@ -291,7 +310,7 @@ function showDetailView(id) {
     const badgeClass = getBandColorClass(item["バンド名"]);
     
     const venueDisplay = item["会場URL"] ? `<a href="${item["会場URL"]}" target="_blank" class="btn btn-outline-primary btn-sm mt-2 shadow-sm">会場公式サイトを開く 🔗</a>` : '';
-    const noteDisplay = item["備考"] ? `<div class="alert alert-secondary mt-3 small"><strong>ℹ️ 備考・詳細</strong><br>${item["備考"]}</div>` : '';
+    const noteDisplay = item["備考"] ? `<div class="alert alert-secondary mt-3 small"><strong>ℹ️ 備考・詳細</strong><br>${item["備考"].replace(/\n/g, '<br>')}</div>` : '';
     
     let flyerDisplay = '';
     if (item["フライヤー"] && item["フライヤー"].trim().length > 0) {
@@ -368,7 +387,16 @@ function setView(viewType) {
     const btnList = document.getElementById('btn-list');
     const btnCal = document.getElementById('btn-cal');
 
+    // リストやカレンダーに戻るとき、上部パーツ（ヘッダー等）を一括で再表示
+    const headerContainer = document.getElementById('header-container');
+    const viewTabs = document.getElementById('view-tabs');
+    const bandTabs = document.getElementById('bandTabs');
+
     if (viewType === 'list') {
+        headerContainer.classList.remove('d-none');
+        viewTabs.classList.remove('d-none');
+        bandTabs.classList.remove('d-none');
+
         listViewContainer.classList.remove('d-none');
         calendarViewEl.classList.add('d-none');
         detailViewEl.classList.add('d-none');
@@ -376,6 +404,10 @@ function setView(viewType) {
         btnCal.classList.remove('active');
         renderView();
     } else if (viewType === 'calendar') {
+        headerContainer.classList.remove('d-none');
+        viewTabs.classList.remove('d-none');
+        bandTabs.classList.remove('d-none');
+
         listViewContainer.classList.add('d-none');
         calendarViewEl.classList.remove('d-none');
         detailViewEl.classList.add('d-none');
