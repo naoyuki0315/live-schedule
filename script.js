@@ -31,12 +31,10 @@ function fetchSpreadsheetData() {
         });
 }
 
-// 【重要修正】備考欄などのカンマによる列ズレを防ぐ強固なCSVパース処理
 function parseCSV(text) {
     const lines = text.split(/\r\n|\n/);
     if (lines.length === 0 || lines[0] === "") return [];
 
-    // クォーテーションで囲まれたカンマを正しく保持して分割する関数
     const parseLine = (line) => {
         const result = [];
         let start = 0;
@@ -70,7 +68,6 @@ function parseCSV(text) {
             obj[header] = value;
         });
         
-        // 【超重要】見出し名に関わらず、左から9番目（I列＝インデックス8）を強制的に「フライヤー」URLとして絶対確保
         if (currentline[8] && currentline[8].startsWith('http')) {
             obj["フライヤー"] = currentline[8];
         } else {
@@ -189,9 +186,9 @@ function renderView() {
                 lastMonthLabel = currentMonthLabel;
             }
 
-            // リスト表示側：画像は絶対に出さず、小さなバッジ表示のみを維持
+            // 【仕様変更】一番下の行に、背景なし・頭にアイコンを添えて表示する用
             const hasFlyer = item["フライヤー"] && item["フライヤー"].trim().length > 0;
-            const flyerBadge = hasFlyer ? `<span class="badge bg-info text-dark ms-2">フライヤーあり 🔗</span>` : '';
+            const flyerRow = hasFlyer ? `<div class="text-secondary small mt-2 fw-bold">🖼️ フライヤーあり</div>` : '';
 
             const venueDisplay = `<span class="fw-bold text-dark">${item["会場名"]}</span>`;
             const noteDisplay = item["備考"] ? `<div class="text-muted small mt-2">ℹ️ ${item["備考"]}</div>` : '';
@@ -201,17 +198,16 @@ function renderView() {
                 <div class="col-12 mb-2 animate-fade-in" onclick="showDetailView(${item.id})" style="cursor: pointer;">
                     <div class="card shadow-sm live-card border-0">
                         <div class="card-body py-3">
-                            <div class="d-flex align-items-center gap-2 mb-2">
+                            <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-1 gap-md-2 mb-2">
                                 <h6 class="text-primary fw-bold m-0">${item["日付"]} (${dayOfWeek})</h6>
                                 <span class="badge ${badgeClass}">${item["バンド名"]}</span>
-                                ${flyerBadge}
                             </div>
                             <p class="card-text mb-1">
                                 ${venueDisplay} <span class="text-muted small">(${item["エリア"]})</span>
                             </p>
                             <p class="card-text text-secondary small mb-0">⏰ ${item["時間帯"]}</p>
                             ${noteDisplay}
-                        </div>
+                            ${flyerRow} </div>
                     </div>
                 </div>
             `;
@@ -277,7 +273,6 @@ function initCalendar(allBandData) {
     }
 }
 
-// 3. 詳細画面（画像アドレスバグ完全修正 ＆ 開閉ギミック）
 function showDetailView(id) {
     const item = liveData.find(live => live.id == id);
     if (!item) return;
@@ -298,7 +293,6 @@ function showDetailView(id) {
     const venueDisplay = item["会場URL"] ? `<a href="${item["会場URL"]}" target="_blank" class="btn btn-outline-primary btn-sm mt-2 shadow-sm">会場公式サイトを開く 🔗</a>` : '';
     const noteDisplay = item["備考"] ? `<div class="alert alert-secondary mt-3 small"><strong>ℹ️ 備考・詳細</strong><br>${item["備考"]}</div>` : '';
     
-    // I列から確実に引っ張ってきた画像データを使って極小ボタンを構築
     let flyerDisplay = '';
     if (item["フライヤー"] && item["フライヤー"].trim().length > 0) {
         flyerDisplay = `
