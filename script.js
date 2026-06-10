@@ -31,13 +31,12 @@ function fetchSpreadsheetData() {
         });
 }
 
-// 【大修正】セル内の改行・カンマを完璧にスキップしてI列のURLズレを100%防ぐ最強パース
+// 【超強化】列ズレが起きても100%画像URLを救出するトリプルチェック・パース処理
 function parseCSV(text) {
     let lines = [];
     let row = [""];
     let inQuotes = false;
 
-    // 1文字ずつ走査してクォーテーション内の改行やカンマを正しくセル内文字として処理
     for (let i = 0; i < text.length; i++) {
         let c = text[i];
         let next = text[i+1];
@@ -71,22 +70,37 @@ function parseCSV(text) {
         if (currentline.length === 1 && currentline[0] === "") continue;
         
         const obj = {};
+        let detectedFlyer = "";
+
         headers.forEach((header, index) => {
             let value = currentline[index] ? currentline[index].trim() : "";
             if (header === "日付" && value.includes("/")) {
                 value = value.replace(/\//g, "-");
             }
             obj[header] = value;
+
+            // ① 見出し名に「フライヤー」が入っている列からURLを仮取得
+            if (header.includes("フライヤー") && value.startsWith("http")) {
+                detectedFlyer = value;
+            }
         });
         
-        // 左から9番目（I列＝インデックス8）からノイズを除去して確実にフライヤーURLとして絶対確保
-        let flyerUrl = currentline[8] ? currentline[8].trim() : "";
-        if (flyerUrl.startsWith('http')) {
-            obj["フライヤー"] = flyerUrl;
-        } else {
-            obj["フライヤー"] = "";
+        // ② 【フォールバック】見出しで取れなくても、I列（インデックス8）がhttpなら強制採用
+        if (!detectedFlyer && currentline[8] && currentline[8].trim().startsWith('http')) {
+            detectedFlyer = currentline[8].trim();
+        }
+
+        // ③ 【最終奥義】どこかしらの列にGitHubなどの画像URLが紛れ込んでいたら自動で救出
+        if (!detectedFlyer) {
+            for (let col of currentline) {
+                if (col && col.trim().startsWith("http") && (col.includes("raw=true") || col.includes("flyer") || col.includes(".PNG") || col.includes(".png"))) {
+                    detectedFlyer = col.trim();
+                    break;
+                }
+            }
         }
         
+        obj["フライヤー"] = detectedFlyer;
         obj["id"] = i; 
         result.push(obj);
     }
@@ -286,7 +300,7 @@ function initCalendar(allBandData) {
     }
 }
 
-// 3. 詳細画面（上部要素を完全消去 ＆ 正確なフライヤー表示）
+// 【大改造】詳細画面：初期1/8表示 ＆ タップでその場で等倍（最大550px）トグル機能
 function showDetailView(id) {
     const item = liveData.find(live => live.id == id);
     if (!item) return;
@@ -296,7 +310,6 @@ function showDetailView(id) {
     }
     currentView = 'detail';
 
-    // 【修正】戻るボタンより上のパーツ（ヘッダー・表示タブ・総合等のタブ）をすべて非表示化！
     document.getElementById('header-container').classList.add('d-none');
     document.getElementById('view-tabs').classList.add('d-none');
     document.getElementById('bandTabs').classList.add('d-none');
@@ -312,17 +325,14 @@ function showDetailView(id) {
     const venueDisplay = item["会場URL"] ? `<a href="${item["会場URL"]}" target="_blank" class="btn btn-outline-primary btn-sm mt-2 shadow-sm">会場公式サイトを開く 🔗</a>` : '';
     const noteDisplay = item["備考"] ? `<div class="alert alert-secondary mt-3 small"><strong>ℹ️ 備考・詳細</strong><br>${item["備考"].replace(/\n/g, '<br>')}</div>` : '';
     
+    // 【仕様変更】初期は1/8サイズ(max-width:140px)、タップすると全幅拡大するスマート構造
     let flyerDisplay = '';
     if (item["フライヤー"] && item["フライヤー"].trim().length > 0) {
         flyerDisplay = `
             <div class="mt-4 border-top pt-3">
-                <div class="d-inline-flex align-items-center gap-2" 
-                     onclick="toggleFlyerImage()" style="cursor: pointer; user-select: none;">
-                    <img src="${item["フライヤー"].trim()}" alt="極小フライヤー" style="height: 38px; width: auto; object-fit: contain; border-radius: 4px; border: 1px solid #ddd;">
-                    <span class="fw-bold text-primary small">⬅️ タップ</span>
-                </div>
-                <div id="full-size-flyer" class="mt-3 text-center d-none animate-fade-in">
-                    <img src="${item["フライヤー"].trim()}" alt="フライヤー拡大" class="img-fluid rounded shadow" style="max-height: 550px; object-fit: contain;">
+                <p class="text-muted small mb-2">🔍 フライヤー（タップで拡大・縮小できます）</p>
+                <div class="d-inline-block" onclick="toggleFlyerImage()" style="cursor: pointer; user-select: none;">
+                    <img id="flyer-image" src="${item["フライヤー"].trim()}" alt="フライヤー" class="img-fluid rounded shadow-sm" style="max-width: 140px; height: auto; object-fit: contain; border: 1px solid #ddd; transition: max-width 0.25s ease-in-out;">
                 </div>
             </div>
         `;
@@ -346,10 +356,21 @@ function showDetailView(id) {
     window.scrollTo(0, 0);
 }
 
+// 【新機能】1/8サイズと元画像サイズ（上限550px）をスムーズに行き来させるトグル
 function toggleFlyerImage() {
-    const flyerContainer = document.getElementById('full-size-flyer');
-    if (flyerContainer) {
-        flyerContainer.classList.toggle('d-none');
+    const img = document.getElementById('flyer-image');
+    if (img) {
+        if (img.style.maxWidth === '140px') {
+            img.style.maxWidth = '100%';
+            img.style.maxHeight = '550px';
+            img.classList.remove('shadow-sm');
+            img.classList.add('shadow');
+        } else {
+            img.style.maxWidth = '140px';
+            img.style.maxHeight = 'none';
+            img.classList.remove('shadow');
+            img.classList.add('shadow-sm');
+        }
     }
 }
 
@@ -387,7 +408,6 @@ function setView(viewType) {
     const btnList = document.getElementById('btn-list');
     const btnCal = document.getElementById('btn-cal');
 
-    // リストやカレンダーに戻るとき、上部パーツ（ヘッダー等）を一括で再表示
     const headerContainer = document.getElementById('header-container');
     const viewTabs = document.getElementById('view-tabs');
     const bandTabs = document.getElementById('bandTabs');
