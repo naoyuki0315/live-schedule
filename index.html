@@ -13,7 +13,7 @@
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     
     <style>
-        /* 【修正】ヘッダー画像の高さを70%に変更 */
+        /* スマホ版（基本サイズ）：ヘッダー画像の高さ70% */
         .header-bg-container {
             width: 100%;
             height: 140px;             
@@ -24,7 +24,7 @@
         }
         .header-img-wrapper {
             position: relative;
-            height: 70%;               /* 80%から70%に縮小 */
+            height: 70%;               
             display: inline-block;     
         }
         .header-img {
@@ -32,6 +32,15 @@
             width: auto;               
             display: block;
         }
+
+        /* 【新設】PC版（画面幅768px以上）のとき、ヘッダー全体と画像を2倍の大きさに拡大 */
+        @media (min-width: 768px) {
+            .header-bg-container {
+                height: 280px; /* 140px のちょうど2倍 */
+            }
+            /* wrapperのheight: 70% が維持されるため、中の画像も自動的に2倍サイズになります */
+        }
+        
         /* 左右のタップを検知する透明マスク */
         .mask-layer {
             position: absolute;
