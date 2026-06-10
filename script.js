@@ -31,7 +31,7 @@ function fetchSpreadsheetData() {
         });
 }
 
-// 【超強化】列ズレが起きても100%画像URLを救出するトリプルチェック・パース処理
+// 【完全版】セル内改行・列ズレを防ぎ、GitHubのURLも確実に画像化するパース処理
 function parseCSV(text) {
     let lines = [];
     let row = [""];
@@ -85,12 +85,12 @@ function parseCSV(text) {
             }
         });
         
-        // ② 【フォールバック】見出しで取れなくても、I列（インデックス8）がhttpなら強制採用
+        // ② 見出しで取れなくても、I列（インデックス8）がhttpなら強制採用
         if (!detectedFlyer && currentline[8] && currentline[8].trim().startsWith('http')) {
             detectedFlyer = currentline[8].trim();
         }
 
-        // ③ 【最終奥義】どこかしらの列にGitHubなどの画像URLが紛れ込んでいたら自動で救出
+        // ③ どこかしらの列にGitHubなどの画像URLが紛れ込んでいたら自動で救出
         if (!detectedFlyer) {
             for (let col of currentline) {
                 if (col && col.trim().startsWith("http") && (col.includes("raw=true") || col.includes("flyer") || col.includes(".PNG") || col.includes(".png"))) {
@@ -98,6 +98,14 @@ function parseCSV(text) {
                     break;
                 }
             }
+        }
+
+        // 🚀【最重要：GitHub画像の表示エラー対策】
+        // github.com/～/blob/～ の形式のURLを、確実に画像表示できるraw直リンクURLへ自動強制変換する
+        if (detectedFlyer && detectedFlyer.includes("github.com") && detectedFlyer.includes("/blob/")) {
+            detectedFlyer = detectedFlyer
+                .replace("github.com", "raw.githubusercontent.com")
+                .replace("/blob/", "/");
         }
         
         obj["フライヤー"] = detectedFlyer;
@@ -300,7 +308,7 @@ function initCalendar(allBandData) {
     }
 }
 
-// 【大改造】詳細画面：初期1/8表示 ＆ タップでその場で等倍（最大550px）トグル機能
+// 詳細画面：初期1/8表示 ＆ タップでその場で等倍トグル機能
 function showDetailView(id) {
     const item = liveData.find(live => live.id == id);
     if (!item) return;
@@ -325,7 +333,7 @@ function showDetailView(id) {
     const venueDisplay = item["会場URL"] ? `<a href="${item["会場URL"]}" target="_blank" class="btn btn-outline-primary btn-sm mt-2 shadow-sm">会場公式サイトを開く 🔗</a>` : '';
     const noteDisplay = item["備考"] ? `<div class="alert alert-secondary mt-3 small"><strong>ℹ️ 備考・詳細</strong><br>${item["備考"].replace(/\n/g, '<br>')}</div>` : '';
     
-    // 【仕様変更】初期は1/8サイズ(max-width:140px)、タップすると全幅拡大するスマート構造
+    // フライヤー初期は1/8サイズ(max-width:140px)、タップで拡大トグル
     let flyerDisplay = '';
     if (item["フライヤー"] && item["フライヤー"].trim().length > 0) {
         flyerDisplay = `
@@ -356,7 +364,6 @@ function showDetailView(id) {
     window.scrollTo(0, 0);
 }
 
-// 【新機能】1/8サイズと元画像サイズ（上限550px）をスムーズに行き来させるトグル
 function toggleFlyerImage() {
     const img = document.getElementById('flyer-image');
     if (img) {
