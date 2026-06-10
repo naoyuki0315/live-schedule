@@ -13,18 +13,18 @@
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     
     <style>
-        /* 高さ80%・上余白・背景色馴染み・画像のみグレーアウト */
+        /* 【修正】ヘッダー画像の高さを70%に変更 */
         .header-bg-container {
             width: 100%;
             height: 140px;             
-            background-color: #f8f9fa; /* アプリ背景の薄グレーに合わせる */
+            background-color: #f8f9fa; 
             display: flex;
             justify-content: center;
             align-items: center;       
         }
         .header-img-wrapper {
             position: relative;
-            height: 80%;               
+            height: 70%;               /* 80%から70%に縮小 */
             display: inline-block;     
         }
         .header-img {
@@ -94,13 +94,13 @@
         </div>
 
         <div id="list-view-container">
-            <div id="live-count-list" class="alert alert-info text-center fw-bold mb-3"></div>
+            <div id="live-count-list" class="alert alert-info text-center fw-bold mb-3 py-1 m-0" style="font-size: 0.95rem;"></div>
             <div id="list-view" class="row"></div>
         </div>
 
         <div id="calendar-view" class="d-none">
-            <div id="live-count-calendar" class="alert alert-info text-center fw-bold mb-3"></div>
-            <div id="calendar" class="p-2 border rounded bg-white shadow-sm"></div>
+            <div id="live-count-calendar" class="alert alert-info text-center fw-bold mb-3 py-1 m-0" style="font-size: 0.95rem;"></div>
+            <div id="calendar" class="p-2 border rounded bg-white shadow-sm mt-3"></div>
         </div>
 
         <div id="detail-view" class="d-none animate-fade-in">
