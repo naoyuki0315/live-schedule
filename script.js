@@ -53,13 +53,13 @@ function parseCSV(text) {
             obj[header] = value;
         });
         
-        obj["id"] = i; // 一意の識別ID
+        obj["id"] = i; 
         result.push(obj);
     }
     return result;
 }
 
-// 【最優先復活】ヘッダー画像の左右タップギミック
+// ヘッダー画像の左右タップギミック
 function setupHeaderClickEvents() {
     const maskLeft = document.getElementById('maskLeft');
     const maskRight = document.getElementById('maskRight');
@@ -73,32 +73,21 @@ function setupHeaderClickEvents() {
         // 左側（MAMAエリア）タップ
         maskLeft.addEventListener('click', function() {
             if (currentBand === 'DROP DOWN MAMA') {
-                switchTabByName('ALL');
+                switchTab('ALL');
             } else {
-                switchTabByName('DROP DOWN MAMA');
+                switchTab('DROP DOWN MAMA');
             }
         });
 
         // 右側（2120エリア）タップ
         maskRight.addEventListener('click', function() {
             if (currentBand === '2120 BLUES BAND') {
-                switchTabByName('ALL');
+                switchTab('ALL');
             } else {
-                switchTabByName('2120 BLUES BAND');
+                switchTab('2120 BLUES BAND');
             }
         });
     }
-}
-
-function switchTabByName(bandName) {
-    const buttons = document.querySelectorAll('#bandTabs button');
-    buttons.forEach(btn => {
-        if (bandName === 'ALL' && btn.innerText.includes('総合')) {
-            btn.click();
-        } else if (btn.innerText.includes(bandName)) {
-            btn.click();
-        }
-    });
 }
 
 function getBandColorClass(bandName) {
@@ -115,7 +104,6 @@ function getBandHexColor(bandName) {
     return '#4a5568';
 }
 
-// 「今月」「来月」「〇月」の見出し判定
 function getMonthLabel(dateStr) {
     const targetDate = new Date(dateStr);
     const today = new Date();
@@ -137,14 +125,14 @@ function renderView() {
 
     const todayStr = new Date().toISOString().split('T')[0];
     
-    // まず選択されたバンドで全データを絞り込む（過去ログ対応の母体）
+    // 選択されたバンドで全データを絞り込む
     let bandFilteredData = (currentBand === 'ALL') ? liveData : liveData.filter(item => item["バンド名"] === currentBand);
 
-    // 【仕様】リスト表示は「今日以降（未来）」のみに限定
+    // リスト表示は「今日以降（未来）」のみに限定
     let upcomingData = bandFilteredData.filter(item => item["日付"] && item["日付"] >= todayStr);
     upcomingData.sort((a, b) => new Date(a["日付"]) - new Date(b["日付"]));
 
-    // ヘッダーマスクの濃淡ギミック制御
+    // ヘッダーマスクの濃淡ギミック制御（画像の上だけにかかります）
     const maskLeft = document.getElementById('maskLeft');
     const maskRight = document.getElementById('maskRight');
     if (currentBand === 'DROP DOWN MAMA') {
@@ -158,7 +146,7 @@ function renderView() {
         maskRight.style.opacity = '0';
     }
 
-    // 件数テキストの更新（リスト側は未来の件数）
+    // 件数テキストの更新
     document.getElementById('live-count-list').innerText = `これから開催予定のライブ：${upcomingData.length} 件`;
 
     const listView = document.getElementById('list-view');
@@ -173,7 +161,6 @@ function renderView() {
             const dateObj = new Date(item["日付"]);
             const dayOfWeek = weekDays[dateObj.getDay()];
             
-            // 月替わりの自動見出し挿入
             const currentMonthLabel = getMonthLabel(item["日付"]);
             if (currentMonthLabel !== lastMonthLabel) {
                 listView.innerHTML += `
@@ -184,7 +171,6 @@ function renderView() {
                 lastMonthLabel = currentMonthLabel;
             }
 
-            // 【仕様】リスト側はフライヤー画像を出さず、「フライヤーあり 🔗」のバッジでお知らせ
             const hasFlyer = item["フライヤー"] && item["フライヤー"].trim().startsWith('http');
             const flyerBadge = hasFlyer ? `<span class="badge bg-info text-dark ms-2">フライヤーあり 🔗</span>` : '';
 
@@ -213,7 +199,6 @@ function renderView() {
         });
     }
 
-    // 【仕様】カレンダーには過去ログもすべて含んだデータを引き渡す
     initCalendar(bandFilteredData);
 }
 
@@ -225,13 +210,11 @@ function updateCalendarTitleWithCount() {
     const currentMonth = currentPeriod.getMonth(); 
 
     const events = calendar.getEvents();
-    // カレンダー上に表示されている、その月だけのイベントを正確にバックカウント
     const monthCount = events.filter(event => {
         const eventDate = event.start;
         return eventDate.getFullYear() === currentYear && eventDate.getMonth() === currentMonth;
     }).length;
 
-    // 件数表示の同期
     document.getElementById('live-count-calendar').innerText = `${currentYear}年${currentMonth + 1}月 のライブ：${monthCount} 件`;
 
     const titleEl = document.querySelector('.fc .fc-toolbar-title');
@@ -243,7 +226,6 @@ function updateCalendarTitleWithCount() {
 function initCalendar(allBandData) {
     const calendarEl = document.getElementById('calendar');
     
-    // 過去未来すべてのスケジュールをマッピング
     const calendarEvents = allBandData.map(item => ({
         id: item.id, 
         title: `${item["バンド名"]} @${item["会場名"]}`,
@@ -278,7 +260,6 @@ function initCalendar(allBandData) {
     }
 }
 
-// 【仕様】詳細画面 ＆ 極小フライヤーをタップしてアコーディオン開閉するギミック
 function showDetailView(id) {
     const item = liveData.find(live => live.id == id);
     if (!item) return;
@@ -299,7 +280,6 @@ function showDetailView(id) {
     const venueDisplay = item["会場URL"] ? `<a href="${item["会場URL"]}" target="_blank" class="btn btn-outline-primary btn-sm mt-2 shadow-sm">会場公式サイトを開く 🔗</a>` : '';
     const noteDisplay = item["備考"] ? `<div class="alert alert-secondary mt-3 small"><strong>ℹ️ 備考・詳細</strong><br>${item["備考"]}</div>` : '';
     
-    // 【極小アイコン仕様】実際のフライヤーを文字の約2倍サイズ(縦36px)に縮小し、クリックでトグル開閉
     let flyerDisplay = '';
     if (item["フライヤー"] && item["フライヤー"].trim().startsWith('http')) {
         flyerDisplay = `
@@ -309,7 +289,6 @@ function showDetailView(id) {
                     <img src="${item["フライヤー"].trim()}" alt="極小フライヤー" style="height: 36px; width: auto; object-fit: contain; border-radius: 4px;">
                     <span class="fw-bold text-primary small">⬅️ タップしてフライヤーを表示</span>
                 </div>
-                
                 <div id="full-size-flyer" class="mt-3 text-center d-none animate-fade-in">
                     <img src="${item["フライヤー"].trim()}" alt="フライヤー拡大" class="img-fluid rounded shadow" style="max-height: 550px; object-fit: contain;">
                 </div>
@@ -322,12 +301,9 @@ function showDetailView(id) {
             <div class="card-body p-4">
                 <span class="badge ${badgeClass} mb-2">${item["バンド名"]}</span>
                 <h3 class="text-primary fw-bold mb-3">${item["日付"]} (${dayOfWeek})</h3>
-                
                 <h5 class="fw-bold text-dark mb-1">📍 会場: ${item["会場名"]}</h5>
                 <p class="text-muted small mb-3">（エリア：${item["エリア"]}）</p>
-                
                 <h6 class="text-dark mb-3">⏰ 時間帯: <strong>${item["時間帯"]}</strong></h6>
-                
                 ${venueDisplay}
                 ${noteDisplay}
                 ${flyerDisplay}
@@ -338,7 +314,6 @@ function showDetailView(id) {
     window.scrollTo(0, 0);
 }
 
-// 詳細画面のフライヤー画像をパッと表示/非表示にするトグル関数
 function toggleFlyerImage() {
     const flyerContainer = document.getElementById('full-size-flyer');
     if (flyerContainer) {
@@ -352,10 +327,19 @@ function closeDetailView() {
     setView(currentView);
 }
 
+// 【機能強化】画像タップでも、文字ボタンタップでも、完全にボタンの見た目（active）が連動する処理
 function switchTab(bandName) {
     currentBand = bandName;
     const buttons = document.querySelectorAll('#bandTabs button');
-    buttons.forEach(btn => btn.classList.remove('active'));
+    
+    buttons.forEach(btn => {
+        if ((bandName === 'ALL' && btn.innerText.includes('総合')) || 
+            (bandName !== 'ALL' && btn.innerText.includes(bandName))) {
+            btn.classList.add('active'); // 選択された文字ボタンを点灯
+        } else {
+            btn.classList.remove('active'); // 他を消灯
+        }
+    });
     
     if (currentView === 'detail') {
         document.getElementById('detail-view').classList.add('d-none');
