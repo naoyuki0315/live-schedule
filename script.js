@@ -122,6 +122,7 @@ function renderView() {
     const todayStr = new Date().toISOString().split('T')[0];
     let bandFilteredData = (currentBand === 'ALL') ? liveData : liveData.filter(item => item["バンド名"] === currentBand);
 
+    // 【仕様通り】今日以降のライブ（未来）だけをリスト表示
     let upcomingData = bandFilteredData.filter(item => item["日付"] && item["日付"] >= todayStr);
     upcomingData.sort((a, b) => new Date(a["日付"]) - new Date(b["日付"]));
 
@@ -138,6 +139,7 @@ function renderView() {
         maskRight.style.opacity = '0';
     }
 
+    // 上部のアラートには「今後の総件数」を表示
     const countText = `これから開催予定のライブ：${upcomingData.length} 件`;
     document.getElementById('live-count-list').innerText = countText;
     document.getElementById('live-count-calendar').innerText = countText;
@@ -164,7 +166,7 @@ function renderView() {
                 lastMonthLabel = currentMonthLabel;
             }
 
-            // リスト一覧側にも、I列にフライヤーURLがあれば「フライヤーあり」の目印を出す
+            // 【仕様通り】リストの時点では画像は出さず、小さなバッジのみ表示
             const hasFlyer = item["フライヤー"] && item["フライヤー"].trim().startsWith('http');
             const flyerBadge = hasFlyer ? `<span class="badge bg-info text-dark ms-2">フライヤーあり 🔗</span>` : '';
 
@@ -209,6 +211,7 @@ function updateCalendarTitleWithCount() {
         return eventDate.getFullYear() === currentYear && eventDate.getMonth() === currentMonth;
     }).length;
 
+    // 【仕様通り】月毎の件数は、カレンダー内の月の横のカッコ内に表示
     const titleEl = document.querySelector('.fc .fc-toolbar-title');
     if (titleEl) {
         titleEl.innerText = `${currentYear}年${currentMonth + 1}月 (${monthCount}件)`;
@@ -252,7 +255,7 @@ function initCalendar(allBandData) {
     }
 }
 
-// 【完全復活】詳細ページでのフライヤー有無判定＆タップ開閉ギミック
+// 3. 詳細画面のフライヤー開閉ギミック（仕様に完全一致）
 function showDetailView(id) {
     const item = liveData.find(live => live.id == id);
     if (!item) return;
@@ -273,15 +276,15 @@ function showDetailView(id) {
     const venueDisplay = item["会場URL"] ? `<a href="${item["会場URL"]}" target="_blank" class="btn btn-outline-primary btn-sm mt-2 shadow-sm">会場公式サイトを開く 🔗</a>` : '';
     const noteDisplay = item["備考"] ? `<div class="alert alert-secondary mt-3 small"><strong>ℹ️ 備考・詳細</strong><br>${item["備考"]}</div>` : '';
     
-    // シートのI列（フライヤー）にURLがある場合の有無表示＆タップ開閉エリア
+    // 【仕様通り】極小フライヤー（文字の2倍サイズ）の横に「⬅️ タップ」とだけ配置、押すとパッと下に出現
     let flyerDisplay = '';
     if (item["フライヤー"] && item["フライヤー"].trim().startsWith('http')) {
         flyerDisplay = `
             <div class="mt-4 border-top pt-3">
-                <div class="d-inline-flex align-items-center gap-2 p-2 bg-light border rounded shadow-sm" 
+                <div class="d-inline-flex align-items-center gap-2" 
                      onclick="toggleFlyerImage()" style="cursor: pointer; user-select: none;">
-                    <img src="${item["フライヤー"].trim()}" alt="極小フライヤー" style="height: 36px; width: auto; object-fit: contain; border-radius: 4px;">
-                    <span class="fw-bold text-primary small">⬅️ タップしてフライヤーを表示（有無：あり）</span>
+                    <img src="${item["フライヤー"].trim()}" alt="極小フライヤー" style="height: 2.2rem; width: auto; object-fit: contain; border-radius: 4px;">
+                    <span class="fw-bold text-primary small">⬅️ タップ</span>
                 </div>
                 <div id="full-size-flyer" class="mt-3 text-center d-none animate-fade-in">
                     <img src="${item["フライヤー"].trim()}" alt="フライヤー拡大" class="img-fluid rounded shadow" style="max-height: 550px; object-fit: contain;">
@@ -308,7 +311,6 @@ function showDetailView(id) {
     window.scrollTo(0, 0);
 }
 
-// フライヤー開閉用の関数
 function toggleFlyerImage() {
     const flyerContainer = document.getElementById('full-size-flyer');
     if (flyerContainer) {
