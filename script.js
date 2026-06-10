@@ -31,26 +31,51 @@ function fetchSpreadsheetData() {
         });
 }
 
+// 【重要修正】備考欄などのカンマによる列ズレを防ぐ強固なCSVパース処理
 function parseCSV(text) {
     const lines = text.split(/\r\n|\n/);
     if (lines.length === 0 || lines[0] === "") return [];
 
-    const headers = lines[0].split(',').map(h => h.replace(/^["']|["']$/g, '').trim());
+    // クォーテーションで囲まれたカンマを正しく保持して分割する関数
+    const parseLine = (line) => {
+        const result = [];
+        let start = 0;
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+            if (line[i] === '"') {
+                inQuotes = !inQuotes;
+            } else if (line[i] === ',' && !inQuotes) {
+                result.push(line.substring(start, i));
+                start = i + 1;
+            }
+        }
+        result.push(line.substring(start));
+        return result.map(v => v.replace(/^["']|["']$/g, '').trim());
+    };
+
+    const headers = parseLine(lines[0]);
     const result = [];
 
     for (let i = 1; i < lines.length; i++) {
         if (lines[i].trim() === "") continue; 
         
-        const currentline = lines[i].split(',');
+        const currentline = parseLine(lines[i]);
         const obj = {};
         
         headers.forEach((header, index) => {
-            let value = currentline[index] ? currentline[index].replace(/^["']|["']$/g, '').trim() : "";
+            let value = currentline[index] ? currentline[index] : "";
             if (header === "日付" && value.includes("/")) {
                 value = value.replace(/\//g, "-");
             }
             obj[header] = value;
         });
+        
+        // 【超重要】見出し名に関わらず、左から9番目（I列＝インデックス8）を強制的に「フライヤー」URLとして絶対確保
+        if (currentline[8] && currentline[8].startsWith('http')) {
+            obj["フライヤー"] = currentline[8];
+        } else {
+            obj["フライヤー"] = "";
+        }
         
         obj["id"] = i; 
         result.push(obj);
@@ -122,7 +147,6 @@ function renderView() {
     const todayStr = new Date().toISOString().split('T')[0];
     let bandFilteredData = (currentBand === 'ALL') ? liveData : liveData.filter(item => item["バンド名"] === currentBand);
 
-    // 【仕様通り】今日以降のライブ（未来）だけをリスト表示
     let upcomingData = bandFilteredData.filter(item => item["日付"] && item["日付"] >= todayStr);
     upcomingData.sort((a, b) => new Date(a["日付"]) - new Date(b["日付"]));
 
@@ -139,7 +163,6 @@ function renderView() {
         maskRight.style.opacity = '0';
     }
 
-    // 上部のアラートには「今後の総件数」を表示
     const countText = `これから開催予定のライブ：${upcomingData.length} 件`;
     document.getElementById('live-count-list').innerText = countText;
     document.getElementById('live-count-calendar').innerText = countText;
@@ -166,8 +189,8 @@ function renderView() {
                 lastMonthLabel = currentMonthLabel;
             }
 
-            // 【仕様通り】リストの時点では画像は出さず、小さなバッジのみ表示
-            const hasFlyer = item["フライヤー"] && item["フライヤー"].trim().startsWith('http');
+            // リスト表示側：画像は絶対に出さず、小さなバッジ表示のみを維持
+            const hasFlyer = item["フライヤー"] && item["フライヤー"].trim().length > 0;
             const flyerBadge = hasFlyer ? `<span class="badge bg-info text-dark ms-2">フライヤーあり 🔗</span>` : '';
 
             const venueDisplay = `<span class="fw-bold text-dark">${item["会場名"]}</span>`;
@@ -211,7 +234,6 @@ function updateCalendarTitleWithCount() {
         return eventDate.getFullYear() === currentYear && eventDate.getMonth() === currentMonth;
     }).length;
 
-    // 【仕様通り】月毎の件数は、カレンダー内の月の横のカッコ内に表示
     const titleEl = document.querySelector('.fc .fc-toolbar-title');
     if (titleEl) {
         titleEl.innerText = `${currentYear}年${currentMonth + 1}月 (${monthCount}件)`;
@@ -255,7 +277,7 @@ function initCalendar(allBandData) {
     }
 }
 
-// 3. 詳細画面のフライヤー開閉ギミック（仕様に完全一致）
+// 3. 詳細画面（画像アドレスバグ完全修正 ＆ 開閉ギミック）
 function showDetailView(id) {
     const item = liveData.find(live => live.id == id);
     if (!item) return;
@@ -276,14 +298,14 @@ function showDetailView(id) {
     const venueDisplay = item["会場URL"] ? `<a href="${item["会場URL"]}" target="_blank" class="btn btn-outline-primary btn-sm mt-2 shadow-sm">会場公式サイトを開く 🔗</a>` : '';
     const noteDisplay = item["備考"] ? `<div class="alert alert-secondary mt-3 small"><strong>ℹ️ 備考・詳細</strong><br>${item["備考"]}</div>` : '';
     
-    // 【仕様通り】極小フライヤー（文字の2倍サイズ）の横に「⬅️ タップ」とだけ配置、押すとパッと下に出現
+    // I列から確実に引っ張ってきた画像データを使って極小ボタンを構築
     let flyerDisplay = '';
-    if (item["フライヤー"] && item["フライヤー"].trim().startsWith('http')) {
+    if (item["フライヤー"] && item["フライヤー"].trim().length > 0) {
         flyerDisplay = `
             <div class="mt-4 border-top pt-3">
                 <div class="d-inline-flex align-items-center gap-2" 
                      onclick="toggleFlyerImage()" style="cursor: pointer; user-select: none;">
-                    <img src="${item["フライヤー"].trim()}" alt="極小フライヤー" style="height: 2.2rem; width: auto; object-fit: contain; border-radius: 4px;">
+                    <img src="${item["フライヤー"].trim()}" alt="極小フライヤー" style="height: 38px; width: auto; object-fit: contain; border-radius: 4px; border: 1px solid #ddd;">
                     <span class="fw-bold text-primary small">⬅️ タップ</span>
                 </div>
                 <div id="full-size-flyer" class="mt-3 text-center d-none animate-fade-in">
