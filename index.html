@@ -13,20 +13,29 @@
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     
     <style>
-        /* 【完全復元】最初にお気に入りだった「白の余白がある、小さいサイズ」のヘッダー */
+        /* 【完全修正】高さ80%・上余白・背景色馴染み・画像のみグレーアウト */
         .header-bg-container {
             width: 100%;
-            height: 140px;       /* 画面を圧迫しない、すっきりした小さい高さ */
+            height: 140px;             /* ヘッダーエリア全体の高さ */
+            background-color: #f8f9fa; /* 余白の色を白ではなく、アプリの背景色（bg-light）と同じにする */
+            display: flex;
+            justify-content: center;
+            align-items: center;       /* これにより、上（および下）にきれいな余白が生まれます */
+        }
+        .header-img-wrapper {
             position: relative;
-            background-color: #ffffff; /* 左右に綺麗に出る「白の余白」 */
+            height: 80%;               /* 画像の高さを全体の80%に制限 */
+            display: inline-block;     /* 横幅を画像本来の幅にピタッと合わせる */
         }
         .header-img {
-            width: 100%;
             height: 100%;
-            object-fit: contain; /* 画像を引き伸ばさず、中央にちょこんと収めて余白を作る設定 */
+            width: auto;               /* 横幅は比率を維持して自動調整（絶対に歪みません） */
+            display: block;
         }
-        /* 左右のタップを検知する透明マスク */
+        /* 左右のタップを検知する透明マスク（wrapperの内側なので、画像の上だけがグレーアウトします） */
         .mask-layer {
+            position: absolute;
+            top: 0;
             width: 50%;
             height: 100%;
             background-color: #000;
@@ -34,6 +43,8 @@
             transition: opacity 0.3s ease;
             z-index: 10;
         }
+        #maskLeft { left: 0; }
+        #maskRight { right: 0; }
         
         /* カードのホバー効果 */
         .live-card {
@@ -62,10 +73,12 @@
 </head>
 <body class="bg-light">
 
-    <div class="header-bg-container text-center position-relative">
-        <img src="image.png" alt="Live Schedule" class="header-img">
-        <div id="maskLeft" class="mask-layer position-absolute top-0 start-0"></div>
-        <div id="maskRight" class="mask-layer position-absolute top-0 end-0"></div>
+    <div class="header-bg-container text-center">
+        <div class="header-img-wrapper">
+            <img src="image.png" alt="Live Schedule" class="header-img">
+            <div id="maskLeft" class="mask-layer"></div>
+            <div id="maskRight" class="mask-layer"></div>
+        </div>
     </div>
 
     <div class="container my-4" style="max-width: 800px;">
@@ -74,7 +87,7 @@
             <button id="btn-cal" class="btn btn-outline-primary" onclick="setView('calendar')">カレンダー表示</button>
         </div>
 
-        <div id="bandTabs" class="d-flex justify-content-center gap-2 mb-3 d-none">
+        <div id="bandTabs" class="d-flex justify-content-center gap-2 mb-3">
             <button class="btn btn-sm btn-outline-secondary active" onclick="switchTab('ALL')">総合</button>
             <button class="btn btn-sm btn-outline-secondary" onclick="switchTab('DROP DOWN MAMA')">DROP DOWN MAMA</button>
             <button class="btn btn-sm btn-outline-secondary" onclick="switchTab('2120 BLUES BAND')">2120 BLUES BAND</button>
