@@ -33,12 +33,11 @@
             display: block;
         }
 
-        /* 【新設】PC版（画面幅768px以上）のとき、ヘッダー全体と画像を2倍の大きさに拡大 */
+        /* PC版（画面幅768px以上）のとき、ヘッダー全体と画像を2倍の大きさに拡大 */
         @media (min-width: 768px) {
             .header-bg-container {
-                height: 280px; /* 140px のちょうど2倍 */
+                height: 280px; 
             }
-            /* wrapperのheight: 70% が維持されるため、中の画像も自動的に2倍サイズになります */
         }
         
         /* 左右のタップを検知する透明マスク */
@@ -82,7 +81,7 @@
 </head>
 <body class="bg-light">
 
-    <div class="header-bg-container text-center">
+    <div id="header-container" class="header-bg-container text-center">
         <div class="header-img-wrapper">
             <img src="image.png" alt="Live Schedule" class="header-img">
             <div id="maskLeft" class="mask-layer"></div>
@@ -91,7 +90,7 @@
     </div>
 
     <div class="container my-4" style="max-width: 800px;">
-        <div class="d-flex justify-content-center gap-2 mb-4">
+        <div id="view-tabs" class="d-flex justify-content-center gap-2 mb-4">
             <button id="btn-list" class="btn btn-outline-primary active" onclick="setView('list')">リスト表示</button>
             <button id="btn-cal" class="btn btn-outline-primary" onclick="setView('calendar')">カレンダー表示</button>
         </div>
