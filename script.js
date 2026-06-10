@@ -1,4 +1,3 @@
-// 【固定設定】スプレッドシート公開CSVのURL
 const SPREADSHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQluhuOEDERWVDgxgvKrY7cPLfIF2Qw38VP9BnjGxl318Sy5Fu2RBUm3lwIFot78JLO7-5TO3b5oy1_/pub?gid=544725873&single=true&output=csv";
 
 let liveData = []; 
@@ -9,7 +8,7 @@ let calendar = null;
 const weekDays = ["日", "月", "火", "水", "木", "金", "土"];
 
 document.addEventListener('DOMContentLoaded', function() {
-    setupHeaderClickEvents(); // ヘッダー画像左右タップギミックの初期化
+    setupHeaderClickEvents(); 
     fetchSpreadsheetData(); 
 });
 
@@ -59,7 +58,6 @@ function parseCSV(text) {
     return result;
 }
 
-// ヘッダー画像の左右タップギミック
 function setupHeaderClickEvents() {
     const maskLeft = document.getElementById('maskLeft');
     const maskRight = document.getElementById('maskRight');
@@ -70,7 +68,6 @@ function setupHeaderClickEvents() {
         maskLeft.style.cursor = 'pointer';
         maskRight.style.cursor = 'pointer';
 
-        // 左側（MAMAエリア）タップ
         maskLeft.addEventListener('click', function() {
             if (currentBand === 'DROP DOWN MAMA') {
                 switchTab('ALL');
@@ -79,7 +76,6 @@ function setupHeaderClickEvents() {
             }
         });
 
-        // 右側（2120エリア）タップ
         maskRight.addEventListener('click', function() {
             if (currentBand === '2120 BLUES BAND') {
                 switchTab('ALL');
@@ -124,15 +120,11 @@ function renderView() {
     if (currentView === 'detail') return;
 
     const todayStr = new Date().toISOString().split('T')[0];
-    
-    // 選択されたバンドで全データを絞り込む
     let bandFilteredData = (currentBand === 'ALL') ? liveData : liveData.filter(item => item["バンド名"] === currentBand);
 
-    // リスト表示は「今日以降（未来）」のみに限定
     let upcomingData = bandFilteredData.filter(item => item["日付"] && item["日付"] >= todayStr);
     upcomingData.sort((a, b) => new Date(a["日付"]) - new Date(b["日付"]));
 
-    // ヘッダーマスクの濃淡ギミック制御（画像の上だけにかかります）
     const maskLeft = document.getElementById('maskLeft');
     const maskRight = document.getElementById('maskRight');
     if (currentBand === 'DROP DOWN MAMA') {
@@ -146,8 +138,9 @@ function renderView() {
         maskRight.style.opacity = '0';
     }
 
-    // 件数テキストの更新
-    document.getElementById('live-count-list').innerText = `これから開催予定のライブ：${upcomingData.length} 件`;
+    const countText = `これから開催予定のライブ：${upcomingData.length} 件`;
+    document.getElementById('live-count-list').innerText = countText;
+    document.getElementById('live-count-calendar').innerText = countText;
 
     const listView = document.getElementById('list-view');
     listView.innerHTML = '';
@@ -171,6 +164,7 @@ function renderView() {
                 lastMonthLabel = currentMonthLabel;
             }
 
+            // リスト一覧側にも、I列にフライヤーURLがあれば「フライヤーあり」の目印を出す
             const hasFlyer = item["フライヤー"] && item["フライヤー"].trim().startsWith('http');
             const flyerBadge = hasFlyer ? `<span class="badge bg-info text-dark ms-2">フライヤーあり 🔗</span>` : '';
 
@@ -215,8 +209,6 @@ function updateCalendarTitleWithCount() {
         return eventDate.getFullYear() === currentYear && eventDate.getMonth() === currentMonth;
     }).length;
 
-    document.getElementById('live-count-calendar').innerText = `${currentYear}年${currentMonth + 1}月 のライブ：${monthCount} 件`;
-
     const titleEl = document.querySelector('.fc .fc-toolbar-title');
     if (titleEl) {
         titleEl.innerText = `${currentYear}年${currentMonth + 1}月 (${monthCount}件)`;
@@ -260,6 +252,7 @@ function initCalendar(allBandData) {
     }
 }
 
+// 【完全復活】詳細ページでのフライヤー有無判定＆タップ開閉ギミック
 function showDetailView(id) {
     const item = liveData.find(live => live.id == id);
     if (!item) return;
@@ -280,6 +273,7 @@ function showDetailView(id) {
     const venueDisplay = item["会場URL"] ? `<a href="${item["会場URL"]}" target="_blank" class="btn btn-outline-primary btn-sm mt-2 shadow-sm">会場公式サイトを開く 🔗</a>` : '';
     const noteDisplay = item["備考"] ? `<div class="alert alert-secondary mt-3 small"><strong>ℹ️ 備考・詳細</strong><br>${item["備考"]}</div>` : '';
     
+    // シートのI列（フライヤー）にURLがある場合の有無表示＆タップ開閉エリア
     let flyerDisplay = '';
     if (item["フライヤー"] && item["フライヤー"].trim().startsWith('http')) {
         flyerDisplay = `
@@ -287,7 +281,7 @@ function showDetailView(id) {
                 <div class="d-inline-flex align-items-center gap-2 p-2 bg-light border rounded shadow-sm" 
                      onclick="toggleFlyerImage()" style="cursor: pointer; user-select: none;">
                     <img src="${item["フライヤー"].trim()}" alt="極小フライヤー" style="height: 36px; width: auto; object-fit: contain; border-radius: 4px;">
-                    <span class="fw-bold text-primary small">⬅️ タップしてフライヤーを表示</span>
+                    <span class="fw-bold text-primary small">⬅️ タップしてフライヤーを表示（有無：あり）</span>
                 </div>
                 <div id="full-size-flyer" class="mt-3 text-center d-none animate-fade-in">
                     <img src="${item["フライヤー"].trim()}" alt="フライヤー拡大" class="img-fluid rounded shadow" style="max-height: 550px; object-fit: contain;">
@@ -314,6 +308,7 @@ function showDetailView(id) {
     window.scrollTo(0, 0);
 }
 
+// フライヤー開閉用の関数
 function toggleFlyerImage() {
     const flyerContainer = document.getElementById('full-size-flyer');
     if (flyerContainer) {
@@ -327,7 +322,6 @@ function closeDetailView() {
     setView(currentView);
 }
 
-// 【機能強化】画像タップでも、文字ボタンタップでも、完全にボタンの見た目（active）が連動する処理
 function switchTab(bandName) {
     currentBand = bandName;
     const buttons = document.querySelectorAll('#bandTabs button');
@@ -335,9 +329,9 @@ function switchTab(bandName) {
     buttons.forEach(btn => {
         if ((bandName === 'ALL' && btn.innerText.includes('総合')) || 
             (bandName !== 'ALL' && btn.innerText.includes(bandName))) {
-            btn.classList.add('active'); // 選択された文字ボタンを点灯
+            btn.classList.add('active'); 
         } else {
-            btn.classList.remove('active'); // 他を消灯
+            btn.classList.remove('active'); 
         }
     });
     
