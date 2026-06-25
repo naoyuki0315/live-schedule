@@ -63,6 +63,8 @@ function parseCSV(text) {
     if (lines.length === 0) return [];
 
     const headers = lines[0].map(v => v.trim());
+    // フライヤー列の位置を「見出し名」から動的に特定する（列の追加・並び替えに強くするため）
+    const flyerHeaderIndex = headers.findIndex(h => h.includes("フライヤー"));
     const result = [];
 
     for (let i = 1; i < lines.length; i++) {
@@ -78,16 +80,14 @@ function parseCSV(text) {
                 value = value.replace(/\//g, "-");
             }
             obj[header] = value;
-
-            // ① 見出し名に「フライヤー」が入っている列からURLを仮取得
-            if (header.includes("フライヤー") && value.startsWith("http")) {
-                detectedFlyer = value;
-            }
         });
-        
-        // ② 見出しで取れなくても、I列（インデックス8）がhttpなら強制採用
-        if (!detectedFlyer && currentline[8] && currentline[8].trim().startsWith('http')) {
-            detectedFlyer = currentline[8].trim();
+
+        // ① 見出し名「フライヤー」の列からURLを取得（固定インデックスではなく見出し名で判定）
+        if (flyerHeaderIndex !== -1) {
+            const flyerValue = currentline[flyerHeaderIndex] ? currentline[flyerHeaderIndex].trim() : "";
+            if (flyerValue.startsWith("http")) {
+                detectedFlyer = flyerValue;
+            }
         }
 
         // ③ どこかしらの列にGitHubなどの画像URLが紛れ込んでいたら自動で救出
