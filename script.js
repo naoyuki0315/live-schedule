@@ -143,6 +143,11 @@ function setupHeaderClickEvents() {
     }
 }
 
+// 「状態」列が「中止」かどうかを判定する共通関数
+function isCancelledItem(item) {
+    return (item["状態"] || "").trim() === "中止";
+}
+
 function getBandColorClass(bandName) {
     if (bandName === 'DROP DOWN MAMA') return 'bg-dropdown-mama';
     if (bandName === '2120 BLUES BAND') return 'bg-2120-blues';
@@ -210,7 +215,8 @@ function renderView() {
         upcomingData.forEach(item => {
             const dateObj = new Date(item["日付"]);
             const dayOfWeek = weekDays[dateObj.getDay()];
-            
+            const isCancelled = isCancelledItem(item);
+
             const currentMonthLabel = getMonthLabel(item["日付"]);
             if (currentMonthLabel !== lastMonthLabel) {
                 listView.innerHTML += `
@@ -225,16 +231,21 @@ function renderView() {
             const flyerRow = hasFlyer ? `<div class="text-secondary small mt-2 fw-bold">🖼️ フライヤーあり</div>` : '';
 
             const venueDisplay = `<span class="fw-bold text-dark">${item["会場名"]}</span>`;
-            const noteDisplay = item["備考"] ? `<div class="text-muted small mt-2">ℹ️ ${item["備考"]}</div>` : '';
+            const noteDisplay = item["備考"]
+                ? `<div class="${isCancelled ? 'text-danger fw-bold' : 'text-muted'} small mt-2">${isCancelled ? '⚠️' : 'ℹ️'} ${item["備考"]}</div>`
+                : '';
             const badgeClass = getBandColorClass(item["バンド名"]);
+            const cancelBadge = isCancelled ? `<span class="badge bg-danger ms-1">中止</span>` : '';
+            const cardClass = isCancelled ? 'border-start border-4 border-danger' : 'border-0';
 
             listView.innerHTML += `
                 <div class="col-12 mb-2 animate-fade-in" onclick="showDetailView(${item.id})" style="cursor: pointer;">
-                    <div class="card shadow-sm live-card border-0">
+                    <div class="card shadow-sm live-card ${cardClass}">
                         <div class="card-body py-3">
                             <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-1 gap-md-2 mb-2">
                                 <h6 class="text-primary fw-bold m-0">${item["日付"]} (${dayOfWeek})</h6>
                                 <span class="badge ${badgeClass}">${item["バンド名"]}</span>
+                                ${cancelBadge}
                             </div>
                             <p class="card-text mb-1">
                                 ${venueDisplay} <span class="text-muted small">(${item["エリア"]})</span>
@@ -274,13 +285,18 @@ function updateCalendarTitleWithCount() {
 function initCalendar(allBandData) {
     const calendarEl = document.getElementById('calendar');
     
-    const calendarEvents = allBandData.map(item => ({
-        id: item.id, 
-        title: `${item["バンド名"]} @${item["会場名"]}`,
-        start: item["日付"],
-        backgroundColor: getBandHexColor(item["バンド名"]), 
-        borderColor: 'transparent'
-    }));
+    const calendarEvents = allBandData.map(item => {
+        const isCancelled = isCancelledItem(item);
+        return {
+            id: item.id,
+            title: isCancelled
+                ? `［中止］${item["バンド名"]} @${item["会場名"]}`
+                : `${item["バンド名"]} @${item["会場名"]}`,
+            start: item["日付"],
+            backgroundColor: isCancelled ? '#A32D2D' : getBandHexColor(item["バンド名"]),
+            borderColor: 'transparent'
+        };
+    });
 
     if (calendar) { calendar.destroy(); }
     calendar = new FullCalendar.Calendar(calendarEl, {
@@ -329,9 +345,13 @@ function showDetailView(id) {
     const dateObj = new Date(item["日付"]);
     const dayOfWeek = weekDays[dateObj.getDay()];
     const badgeClass = getBandColorClass(item["バンド名"]);
+    const isCancelled = isCancelledItem(item);
+    const cancelBadgeDetail = isCancelled ? `<span class="badge bg-danger ms-1">中止</span>` : '';
     
     const venueDisplay = item["会場URL"] ? `<a href="${item["会場URL"]}" target="_blank" class="btn btn-outline-primary btn-sm mt-2 shadow-sm">会場公式サイトを開く 🔗</a>` : '';
-    const noteDisplay = item["備考"] ? `<div class="alert alert-secondary mt-3 small"><strong>ℹ️ 備考・詳細</strong><br>${item["備考"].replace(/\n/g, '<br>')}</div>` : '';
+    const noteDisplay = item["備考"]
+        ? `<div class="alert ${isCancelled ? 'alert-danger' : 'alert-secondary'} mt-3 small"><strong>${isCancelled ? '⚠️ 中止' : 'ℹ️ 備考・詳細'}</strong><br>${item["備考"].replace(/\n/g, '<br>')}</div>`
+        : '';
     
     // フライヤー初期は1/8サイズ(max-width:140px)、タップで拡大トグル
     let flyerDisplay = '';
@@ -350,6 +370,7 @@ function showDetailView(id) {
         <div class="card shadow border-0 mt-2">
             <div class="card-body p-4">
                 <span class="badge ${badgeClass} mb-2">${item["バンド名"]}</span>
+                ${cancelBadgeDetail}
                 <h3 class="text-primary fw-bold mb-3">${item["日付"]} (${dayOfWeek})</h3>
                 <h5 class="fw-bold text-dark mb-1">📍 会場: ${item["会場名"]}</h5>
                 <p class="text-muted small mb-3">（エリア：${item["エリア"]}）</p>
