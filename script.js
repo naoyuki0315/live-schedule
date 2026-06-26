@@ -12,7 +12,8 @@ document.addEventListener('DOMContentLoaded', function() {
     fetchSpreadsheetData(); 
 });
 
-function fetchSpreadsheetData() {
+// onComplete(success) は更新ボタンの表示を元に戻すためのコールバック（省略可）
+function fetchSpreadsheetData(onComplete) {
     const listView = document.getElementById('list-view');
     listView.innerHTML = '<p class="text-center text-muted py-5">最新のスケジュールを読み込み中...</p>';
 
@@ -24,11 +25,31 @@ function fetchSpreadsheetData() {
         .then(csvText => {
             liveData = parseCSV(csvText); 
             renderView(); 
+            if (onComplete) onComplete(true);
         })
         .catch(error => {
             console.error(error);
             listView.innerHTML = '<p class="text-center text-danger py-5">データの読み込みに失敗しました。</p>';
+            if (onComplete) onComplete(false);
         });
+}
+
+// 更新ボタン用：画面を閉じずにその場でスプレッドシートを再取得する
+function refreshData() {
+    const btn = document.getElementById('btn-refresh');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '🔄 更新中...';
+    }
+    fetchSpreadsheetData(function(success) {
+        if (!btn) return;
+        btn.disabled = false;
+        btn.innerHTML = success ? '✅ 更新しました' : '⚠️ 失敗しました';
+        setTimeout(() => {
+            btn.disabled = false;
+            btn.innerHTML = '🔄 更新';
+        }, 1500);
+    });
 }
 
 // 【完全版】セル内改行・列ズレを防ぎ、GitHubのURLも確実に画像化するパース処理
