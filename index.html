@@ -77,6 +77,13 @@
         .bg-2120-blues { background-color: #800020 !important; color: white; }
         .bg-suzuna-pa { background-color: #00ced1 !important; color: black; }
         .bg-default-band { background-color: #4a5568 !important; color: white; }
+
+        /* スマホ表示では「リスト/カレンダー表示」と「更新」を2行に分ける */
+        @media (max-width: 767.98px) {
+            #view-tabs {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 <body class="bg-light">
@@ -91,8 +98,10 @@
 
     <div class="container my-4" style="max-width: 800px;">
         <div id="view-tabs" class="d-flex justify-content-center align-items-center gap-2 mb-4">
-            <button id="btn-list" class="btn btn-outline-primary active" onclick="setView('list')">リスト表示</button>
-            <button id="btn-cal" class="btn btn-outline-primary" onclick="setView('calendar')">カレンダー表示</button>
+            <div class="d-flex gap-2">
+                <button id="btn-list" class="btn btn-outline-primary active" onclick="setView('list')">リスト表示</button>
+                <button id="btn-cal" class="btn btn-outline-primary" onclick="setView('calendar')">カレンダー表示</button>
+            </div>
             <button id="btn-refresh" class="btn btn-outline-secondary" onclick="refreshData()">🔄 更新</button>
         </div>
 
